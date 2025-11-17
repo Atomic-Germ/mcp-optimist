@@ -21,11 +21,12 @@ jobs:
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'pnpm'
+          node-version: 20.x
       
       - name: Install dependencies
-        run: pnpm ci
+        run: |
+          sudo apt-get install pnpm
+          pnpm ci
       
       - name: Build TypeScript
         run: pnpm build
