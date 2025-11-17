@@ -1,62 +1,25 @@
-name: MCP Optimist CI
+name: CI
 
 on:
   push:
-    branches: [ main, feature/** ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, feature/** ]
+    branches: [ main ]
 
 jobs:
-  build-and-test:
-    runs-on: ubuntu-latest
-    
-    strategy:
-      matrix:
-        node-version: [18.x, 20.x]
-    
+  build:
+    runs-on: macos-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      
-      - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20.x
-      
-      - name: Install dependencies
-        run: |
-          sudo apt-get install pnpm
-          pnpm ci
-      
-      - name: Build TypeScript
-        run: pnpm build
-      
-      - name: Run tests
-        run: |
-          pnpm test
-          pnpm test:coverage
-      
-      - name: Verify Optimist modules
-        run: |
-          echo "Checking compiled Optimist modules..."
-          ls -lh dist/*.js
-          echo "✅ Optimist modules present"
-  
-  lint:
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'pnpm'
-      
-      - name: Install dependencies
-        run: pnpm ci
-      
-      - name: Check TypeScript
-        run: npx tsc --noEmit
+          cache: 'npm'
+      - name: Install
+        run: |
+          brew install patch-package pnpm
+          pnpm i
+      - name: Build
+        run: pnpm build
+      - name: Run tests
+        run: pnpm test
