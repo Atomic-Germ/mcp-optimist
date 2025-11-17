@@ -9,6 +9,7 @@ import {
 import { OptimistServer } from './server.js';
 import { PerformanceAnalyzer } from './tools/performance.js';
 import { MemoryOptimizer } from './tools/memory.js';
+import { ComplexityAnalyzer } from './tools/complexity.js';
 
 /**
  * Main entry point for the Optimist MCP server
@@ -17,6 +18,7 @@ async function main() {
   const optimist = new OptimistServer();
   const performanceAnalyzer = new PerformanceAnalyzer();
   const memoryOptimizer = new MemoryOptimizer();
+  const complexityAnalyzer = new ComplexityAnalyzer();
   
   const server = new Server(
     {
@@ -68,6 +70,26 @@ async function main() {
             suggestFixes: (args as any).suggestFixes,
           };
           const result = await memoryOptimizer.analyze(path, options);
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(result, null, 2),
+              },
+            ],
+          };
+        }
+
+        case 'analyze_complexity': {
+          const path = (args as any).path;
+          if (!path) {
+            throw new Error('Missing required argument: path');
+          }
+          const options = {
+            maxComplexity: (args as any).maxComplexity,
+            reportFormat: (args as any).reportFormat,
+          };
+          const result = await complexityAnalyzer.analyze(path, options);
           return {
             content: [
               {
