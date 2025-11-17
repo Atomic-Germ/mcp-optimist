@@ -2,9 +2,9 @@ name: MCP Optimist CI
 
 on:
   push:
-    branches: [ main, feat/** ]
+    branches: [ main, feature/** ]
   pull_request:
-    branches: [ main, feat/** ]
+    branches: [ main, feature/** ]
 
 jobs:
   build-and-test:
