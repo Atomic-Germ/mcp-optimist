@@ -28,16 +28,16 @@ Optimist exposes a set of tools via the Model Context Protocol that can be invok
 
 ### Core Tools
 
-| Tool | Purpose |
-|------|---------|
-| `analyze_performance` | Profile code execution and identify performance bottlenecks |
-| `optimize_memory` | Detect memory leaks and suggest memory-efficient patterns |
-| `analyze_complexity` | Evaluate cyclomatic and cognitive complexity |
-| `analyze_dependencies` | Map dependency graphs and find optimization opportunities |
-| `detect_code_smells` | Identify anti-patterns and code quality issues |
-| `find_dead_code` | Locate unused code, variables, and dependencies |
-| `optimize_hot_paths` | Analyze and optimize frequently executed code paths |
-| `suggest_refactoring` | Provide AI-powered refactoring recommendations |
+| Tool                   | Purpose                                                     |
+| ---------------------- | ----------------------------------------------------------- |
+| `analyze_performance`  | Profile code execution and identify performance bottlenecks |
+| `optimize_memory`      | Detect memory leaks and suggest memory-efficient patterns   |
+| `analyze_complexity`   | Evaluate cyclomatic and cognitive complexity                |
+| `analyze_dependencies` | Map dependency graphs and find optimization opportunities   |
+| `detect_code_smells`   | Identify anti-patterns and code quality issues              |
+| `find_dead_code`       | Locate unused code, variables, and dependencies             |
+| `optimize_hot_paths`   | Analyze and optimize frequently executed code paths         |
+| `suggest_refactoring`  | Provide AI-powered refactoring recommendations              |
 
 ## Installation
 
@@ -82,7 +82,7 @@ import { OptimistServer } from 'mcp-optimist';
 const server = new OptimistServer({
   port: 3000,
   analysisDepth: 'deep',
-  enabledTools: ['all']
+  enabledTools: ['all'],
 });
 
 await server.start();
@@ -289,12 +289,12 @@ All tools return responses in this structure:
     findings: Array<Finding>;
     suggestions: Array<Suggestion>;
     metrics: Record<string, any>;
-  };
+  }
   metadata: {
     timestamp: string;
     duration: number;
     filesAnalyzed: number;
-  };
+  }
 }
 ```
 
@@ -333,12 +333,14 @@ Optimist works seamlessly alongside other MCP servers:
 ## Roadmap
 
 ### Phase 1 - Foundation (Current)
+
 - [x] Project setup
 - [x] Core MCP server implementation
 - [x] Basic tool scaffolding
 - [x] Test infrastructure
 
 ### Phase 2 - Core Features ✅ **COMPLETE!**
+
 - [x] Performance analyzer ✅ **COMPLETE**
 - [x] Memory optimizer ✅ **COMPLETE**
 - [x] Complexity analyzer ✅ **COMPLETE**
@@ -347,12 +349,14 @@ Optimist works seamlessly alongside other MCP servers:
 **Phase 2: 100% COMPLETE - All core optimization tools delivered!**
 
 ### Phase 3 - Advanced Features
+
 - [ ] Dependency graph analysis
 - [ ] Dead code elimination
 - [ ] Hot path optimization
 - [ ] AI-powered refactoring
 
 ### Phase 4 - Integration & Polish
+
 - [ ] CI/CD integration
 - [ ] IDE plugins
 - [ ] Performance optimizations

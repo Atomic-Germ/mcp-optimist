@@ -16,6 +16,7 @@ This document outlines the development plan for the Optimist MCP server using Te
 ## Phase 1: Foundation Setup (Week 1)
 
 ### 1.1 Project Initialization
+
 - [x] Git repository setup
 - [x] README.md creation
 - [ ] Package.json configuration
@@ -25,6 +26,7 @@ This document outlines the development plan for the Optimist MCP server using Te
 - [ ] GitHub Actions CI/CD pipeline
 
 **Key Files to Create:**
+
 - `package.json`
 - `tsconfig.json`
 - `.eslintrc.json`
@@ -34,12 +36,14 @@ This document outlines the development plan for the Optimist MCP server using Te
 ### 1.2 Core MCP Server Implementation
 
 **TDD Cycle 1: Server Initialization**
+
 - Test: Server starts and listens on specified port
 - Test: Server responds to health check
 - Test: Server handles MCP protocol handshake
 - Implementation: Basic server setup with MCP SDK
 
 **Files:**
+
 - `src/index.ts` - Entry point
 - `src/server.ts` - Server implementation
 - `src/types/index.ts` - Type definitions
@@ -48,6 +52,7 @@ This document outlines the development plan for the Optimist MCP server using Te
 ### 1.3 Tool Registry System
 
 **TDD Cycle 2: Tool Registration**
+
 - Test: Tools can be registered with schema
 - Test: Tools can be listed
 - Test: Tools can be invoked by name
@@ -55,6 +60,7 @@ This document outlines the development plan for the Optimist MCP server using Te
 - Implementation: Tool registry and dispatcher
 
 **Files:**
+
 - `src/tools/registry.ts`
 - `src/tools/types.ts`
 - `tests/unit/tools/registry.test.ts`
@@ -66,6 +72,7 @@ This document outlines the development plan for the Optimist MCP server using Te
 **TDD Cycle 3: Performance Analysis**
 
 **RED Phase - Write Tests:**
+
 ```typescript
 // tests/unit/tools/performance.test.ts
 describe('PerformanceAnalyzer', () => {
@@ -87,16 +94,19 @@ describe('PerformanceAnalyzer', () => {
 ```
 
 **GREEN Phase - Minimal Implementation:**
+
 - Parse AST to find loops and function calls
 - Basic complexity scoring
 - Simple suggestion engine
 
 **REFACTOR Phase:**
+
 - Extract analysis logic to separate modules
 - Add caching layer
 - Optimize traversal algorithms
 
 **Files:**
+
 - `src/tools/performance.ts`
 - `src/analyzers/ast-parser.ts`
 - `src/analyzers/pattern-matcher.ts`
@@ -108,6 +118,7 @@ describe('PerformanceAnalyzer', () => {
 **TDD Cycle 4: Memory Analysis**
 
 **RED Phase - Write Tests:**
+
 ```typescript
 describe('MemoryOptimizer', () => {
   it('should detect potential memory leaks', async () => {
@@ -128,6 +139,7 @@ describe('MemoryOptimizer', () => {
 ```
 
 **Files:**
+
 - `src/tools/memory.ts`
 - `src/analyzers/memory-analyzer.ts`
 - `tests/unit/tools/memory.test.ts`
@@ -138,6 +150,7 @@ describe('MemoryOptimizer', () => {
 **TDD Cycle 5: Complexity Metrics**
 
 **RED Phase - Write Tests:**
+
 ```typescript
 describe('ComplexityAnalyzer', () => {
   it('should calculate cyclomatic complexity', async () => {
@@ -158,6 +171,7 @@ describe('ComplexityAnalyzer', () => {
 ```
 
 **Files:**
+
 - `src/tools/complexity.ts`
 - `src/analyzers/complexity-calculator.ts`
 - `tests/unit/tools/complexity.test.ts`
@@ -167,6 +181,7 @@ describe('ComplexityAnalyzer', () => {
 **TDD Cycle 6: Code Quality**
 
 **RED Phase - Write Tests:**
+
 ```typescript
 describe('CodeSmellDetector', () => {
   it('should detect long methods', async () => {
@@ -187,6 +202,7 @@ describe('CodeSmellDetector', () => {
 ```
 
 **Files:**
+
 - `src/tools/code-smells.ts`
 - `src/analyzers/smell-detector.ts`
 - `tests/unit/tools/code-smells.test.ts`
@@ -198,6 +214,7 @@ describe('CodeSmellDetector', () => {
 **TDD Cycle 7: Dependency Graph**
 
 **Tests:**
+
 - Build dependency graph from package.json
 - Detect circular dependencies
 - Find unused dependencies
@@ -205,6 +222,7 @@ describe('CodeSmellDetector', () => {
 - Suggest dependency optimizations
 
 **Files:**
+
 - `src/tools/dependencies.ts`
 - `src/analyzers/dependency-graph.ts`
 - `tests/unit/tools/dependencies.test.ts`
@@ -214,6 +232,7 @@ describe('CodeSmellDetector', () => {
 **TDD Cycle 8: Dead Code Detection**
 
 **Tests:**
+
 - Find unused exports
 - Detect unreachable code
 - Identify unused variables
@@ -221,6 +240,7 @@ describe('CodeSmellDetector', () => {
 - Calculate code coverage gaps
 
 **Files:**
+
 - `src/tools/dead-code.ts`
 - `src/analyzers/dead-code-detector.ts`
 - `tests/unit/tools/dead-code.test.ts`
@@ -230,6 +250,7 @@ describe('CodeSmellDetector', () => {
 **TDD Cycle 9: Hot Path Analysis**
 
 **Tests:**
+
 - Identify frequently executed paths
 - Profile execution time
 - Suggest caching opportunities
@@ -237,6 +258,7 @@ describe('CodeSmellDetector', () => {
 - Recommend memoization
 
 **Files:**
+
 - `src/tools/hot-paths.ts`
 - `src/analyzers/execution-profiler.ts`
 - `tests/unit/tools/hot-paths.test.ts`
@@ -246,6 +268,7 @@ describe('CodeSmellDetector', () => {
 **TDD Cycle 10: AI-Powered Suggestions**
 
 **Tests:**
+
 - Analyze code patterns
 - Generate refactoring suggestions
 - Estimate impact of changes
@@ -253,6 +276,7 @@ describe('CodeSmellDetector', () => {
 - Rank suggestions by priority
 
 **Files:**
+
 - `src/tools/refactoring.ts`
 - `src/analyzers/pattern-analyzer.ts`
 - `src/ai/suggestion-engine.ts`
@@ -265,6 +289,7 @@ describe('CodeSmellDetector', () => {
 **TDD Cycle 11: Config Management**
 
 **Tests:**
+
 - Load config from file
 - Merge with defaults
 - Validate config schema
@@ -272,6 +297,7 @@ describe('CodeSmellDetector', () => {
 - Hot-reload configuration
 
 **Files:**
+
 - `src/config/loader.ts`
 - `src/config/validator.ts`
 - `tests/unit/config/loader.test.ts`
@@ -281,6 +307,7 @@ describe('CodeSmellDetector', () => {
 **TDD Cycle 12: Protocol Compliance**
 
 **Integration Tests:**
+
 - Full MCP handshake
 - Tool listing via MCP
 - Tool invocation via MCP
@@ -288,6 +315,7 @@ describe('CodeSmellDetector', () => {
 - Streaming responses
 
 **Files:**
+
 - `tests/integration/mcp-protocol.test.ts`
 - `tests/integration/tool-invocation.test.ts`
 
@@ -296,6 +324,7 @@ describe('CodeSmellDetector', () => {
 **TDD Cycle 13: Optimization**
 
 **Tests:**
+
 - Cache analysis results
 - Parallel file processing
 - Incremental analysis
@@ -303,6 +332,7 @@ describe('CodeSmellDetector', () => {
 - Response time benchmarks
 
 **Files:**
+
 - `src/cache/analysis-cache.ts`
 - `src/utils/parallel-processor.ts`
 - `tests/unit/cache/analysis-cache.test.ts`
@@ -318,6 +348,7 @@ describe('CodeSmellDetector', () => {
 ## Testing Strategy
 
 ### Unit Tests
+
 - Each tool in isolation
 - Analyzer modules independently
 - Utility functions
@@ -325,6 +356,7 @@ describe('CodeSmellDetector', () => {
 - 90%+ code coverage target
 
 ### Integration Tests
+
 - End-to-end tool invocation
 - MCP protocol compliance
 - Multi-tool workflows
@@ -332,7 +364,9 @@ describe('CodeSmellDetector', () => {
 - Real codebase analysis
 
 ### Fixtures
+
 Create test fixtures for:
+
 - Performance issues (slow loops, inefficient algorithms)
 - Memory problems (leaks, large allocations)
 - Complex code (high cyclomatic/cognitive complexity)
@@ -370,6 +404,7 @@ mcp-tdd-complete-cycle --summary "Tool implemented with full test coverage"
 ## Dependencies
 
 ### Core Dependencies
+
 ```json
 {
   "@modelcontextprotocol/sdk": "^1.0.0",
@@ -380,6 +415,7 @@ mcp-tdd-complete-cycle --summary "Tool implemented with full test coverage"
 ```
 
 ### Dev Dependencies
+
 ```json
 {
   "jest": "^29.7.0",
@@ -395,24 +431,28 @@ mcp-tdd-complete-cycle --summary "Tool implemented with full test coverage"
 ## Success Criteria
 
 ### Phase 1 Complete When:
+
 - ✅ Server starts and handles MCP protocol
 - ✅ Tool registry functional
 - ✅ Basic test infrastructure working
 - ✅ CI/CD pipeline operational
 
 ### Phase 2 Complete When:
+
 - ✅ All 4 core tools implemented with TDD
 - ✅ Unit tests passing with >85% coverage
 - ✅ Basic analysis working on sample codebases
 - ✅ Documentation updated
 
 ### Phase 3 Complete When:
+
 - ✅ All 4 advanced tools implemented
 - ✅ Integration tests passing
 - ✅ Real-world testing on open-source projects
 - ✅ Performance benchmarks met
 
 ### Phase 4 Complete When:
+
 - ✅ Full MCP compliance verified
 - ✅ >90% test coverage achieved
 - ✅ Documentation complete
@@ -430,12 +470,14 @@ mcp-tdd-complete-cycle --summary "Tool implemented with full test coverage"
 ## Risk Mitigation
 
 ### Technical Risks
+
 - **AST Parsing Complexity**: Use established libraries (@babel/parser)
 - **Performance Issues**: Implement caching and parallel processing
 - **MCP Protocol Changes**: Follow SDK updates closely
 - **Test Fixture Maintenance**: Automate fixture generation
 
 ### Process Risks
+
 - **Scope Creep**: Stick to defined tool set in v1.0
 - **Testing Overhead**: Invest in test utilities early
 - **Documentation Lag**: Update docs with each PR

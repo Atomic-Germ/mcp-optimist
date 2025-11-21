@@ -91,7 +91,7 @@ Measures code complexity:
 ```typescript
 {
   cyclomatic: number,
-  cognitive: number, 
+  cognitive: number,
   nestingDepth: number,
   functionSize: number,
   hotspots: ComplexityHotspot[]
@@ -224,16 +224,16 @@ Summary Report Generation
 
 ### Available Tools
 
-| Tool | Analyzer | Purpose |
-|------|----------|---------|
-| `analyze_performance` | Performance + AST | Identify bottlenecks and hot paths |
-| `optimize_memory` | Memory + AST | Detect leaks and allocation issues |
-| `analyze_complexity` | Complexity + AST | Measure code complexity metrics |
-| `detect_code_smells` | Smell + AST | Find anti-patterns and quality issues |
-| `analyze_dependencies` | *(Planned)* | Dependency graph analysis |
-| `find_dead_code` | *(Planned)* | Unused code detection |
-| `optimize_hot_paths` | *(Planned)* | Hot path optimization |
-| `suggest_refactoring` | *(Planned)* | AI-powered refactoring |
+| Tool                   | Analyzer          | Purpose                               |
+| ---------------------- | ----------------- | ------------------------------------- |
+| `analyze_performance`  | Performance + AST | Identify bottlenecks and hot paths    |
+| `optimize_memory`      | Memory + AST      | Detect leaks and allocation issues    |
+| `analyze_complexity`   | Complexity + AST  | Measure code complexity metrics       |
+| `detect_code_smells`   | Smell + AST       | Find anti-patterns and quality issues |
+| `analyze_dependencies` | _(Planned)_       | Dependency graph analysis             |
+| `find_dead_code`       | _(Planned)_       | Unused code detection                 |
+| `optimize_hot_paths`   | _(Planned)_       | Hot path optimization                 |
+| `suggest_refactoring`  | _(Planned)_       | AI-powered refactoring                |
 
 ### Tool Response Format
 
@@ -340,7 +340,7 @@ tests/
 ### Coverage Targets
 
 - **Analyzers**: >95% (core analysis logic)
-- **Tools**: >90% (tool implementations) 
+- **Tools**: >90% (tool implementations)
 - **Utilities**: >85% (helper functions)
 - **Overall**: >90% (project-wide)
 

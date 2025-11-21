@@ -18,12 +18,14 @@ Each job depends on the previous one succeeding.
 ## Workflow Triggers
 
 ### Continuous Integration (PR & Push)
+
 - Runs: Lint → Test → Build
 - Triggers on:
   - Pull requests to `main`
   - Pushes to `main` branch
 
 ### Release (Tags)
+
 - Runs: Lint → Test → Build → Release
 - Triggers on: Tags matching `v*` (e.g., `v0.1.0`, `v1.0.0`)
 
@@ -105,6 +107,7 @@ These will be marked as "pre-release" in GitHub.
 Configure these in GitHub repository settings:
 
 ### NPM_TOKEN (Optional)
+
 For automatic npm publishing:
 
 1. Go to [npmjs.com](https://npmjs.com) → Account → Access Tokens
@@ -113,6 +116,7 @@ For automatic npm publishing:
 4. Name: `NPM_TOKEN`
 
 ### GITHUB_TOKEN (Automatic)
+
 Automatically provided by GitHub Actions - no configuration needed.
 
 ## Release Checklist
@@ -175,15 +179,18 @@ Track release status:
 ## Troubleshooting
 
 ### Release job skipped
+
 - Ensure tag starts with `v` (e.g., `v1.0.0`, not `1.0.0`)
 - Verify tag was pushed: `git push origin --tags`
 
 ### npm publish fails
+
 - Check NPM_TOKEN is configured
 - Verify package name isn't taken
 - Ensure version isn't already published
 
 ### Build artifacts missing
+
 - Check previous jobs succeeded
 - Verify artifact upload/download steps
 - Check retention period (7 days default)
@@ -191,6 +198,7 @@ Track release status:
 ## Examples
 
 ### Patch Release
+
 ```bash
 npm version patch
 git push origin main
@@ -199,6 +207,7 @@ git push origin v0.1.1
 ```
 
 ### Minor Release
+
 ```bash
 npm version minor
 git push origin main
@@ -207,6 +216,7 @@ git push origin v0.2.0
 ```
 
 ### Major Release
+
 ```bash
 npm version major
 git push origin main
