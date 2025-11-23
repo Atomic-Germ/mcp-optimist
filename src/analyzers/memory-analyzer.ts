@@ -1,4 +1,5 @@
 import traverse from '@babel/traverse';
+import { File } from '@babel/types';
 import { ASTParser } from './ast-parser';
 
 export interface AllocationInfo {
@@ -40,7 +41,7 @@ export class MemoryAnalyzer {
   /**
    * Find memory allocations
    */
-  private findAllocations(ast: any): AllocationInfo[] {
+  private findAllocations(ast: File): AllocationInfo[] {
     const allocations: AllocationInfo[] = [];
     let inLoop = false;
     let loopDepth = 0;
@@ -115,7 +116,7 @@ export class MemoryAnalyzer {
   /**
    * Find potential memory leaks
    */
-  private findPotentialLeaks(ast: any): LeakPattern[] {
+  private findPotentialLeaks(ast: File): LeakPattern[] {
     const leaks: LeakPattern[] = [];
 
     traverse(ast, {
@@ -197,7 +198,7 @@ export class MemoryAnalyzer {
   /**
    * Find closure-related issues
    */
-  private findClosureIssues(ast: any) {
+  private findClosureIssues(ast: File) {
     const issues: Array<{ line?: number; type: string }> = [];
 
     traverse(ast, {
@@ -221,7 +222,7 @@ export class MemoryAnalyzer {
   /**
    * Find unnecessary array spreading/copying
    */
-  findUnnecessaryCopies(ast: any) {
+  findUnnecessaryCopies(ast: File) {
     const copies: Array<{ line?: number; pattern: string }> = [];
 
     traverse(ast, {

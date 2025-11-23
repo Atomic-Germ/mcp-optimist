@@ -1,4 +1,5 @@
 import traverse from '@babel/traverse';
+import { File } from '@babel/types';
 import { ASTParser } from './ast-parser';
 
 export interface CodeSmell {
@@ -38,7 +39,7 @@ export class SmellAnalyzer {
   /**
    * Find God Objects (classes with too many methods/responsibilities)
    */
-  private findGodObjects(ast: any): CodeSmell[] {
+  private findGodObjects(ast: File): CodeSmell[] {
     const smells: CodeSmell[] = [];
     const classes: Array<{ name: string; methods: number; line?: number }> = [];
 
@@ -71,7 +72,7 @@ export class SmellAnalyzer {
   /**
    * Find functions with long parameter lists
    */
-  private findLongParameterLists(ast: any): CodeSmell[] {
+  private findLongParameterLists(ast: File): CodeSmell[] {
     const smells: CodeSmell[] = [];
 
     const checkParams = (node: any, name: string) => {
@@ -106,7 +107,7 @@ export class SmellAnalyzer {
   /**
    * Find long methods
    */
-  private findLongMethods(ast: any): CodeSmell[] {
+  private findLongMethods(ast: File): CodeSmell[] {
     const smells: CodeSmell[] = [];
 
     const checkLength = (path: any, name: string) => {
@@ -145,7 +146,7 @@ export class SmellAnalyzer {
   /**
    * Find magic numbers
    */
-  private findMagicNumbers(ast: any): CodeSmell[] {
+  private findMagicNumbers(ast: File): CodeSmell[] {
     const smells: CodeSmell[] = [];
     const allowedNumbers = new Set([0, 1, -1, 2, 10, 100, 1000]);
     const foundNumbers = new Map<number, number>();
@@ -179,7 +180,7 @@ export class SmellAnalyzer {
   /**
    * Find empty catch blocks
    */
-  private findEmptyCatches(ast: any): CodeSmell[] {
+  private findEmptyCatches(ast: File): CodeSmell[] {
     const smells: CodeSmell[] = [];
 
     traverse(ast, {
@@ -204,7 +205,7 @@ export class SmellAnalyzer {
   /**
    * Analyze classes
    */
-  private analyzeClasses(ast: any) {
+  private analyzeClasses(ast: File) {
     let classCount = 0;
     let largeClasses = 0;
 
@@ -227,7 +228,7 @@ export class SmellAnalyzer {
   /**
    * Analyze functions
    */
-  private analyzeFunctions(ast: any) {
+  private analyzeFunctions(ast: File) {
     let functionCount = 0;
     let longFunctions = 0;
 

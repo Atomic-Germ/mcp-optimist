@@ -46,11 +46,11 @@ async function main() {
     try {
       switch (name) {
         case 'analyze_performance': {
-          const path = (args as any).path;
-          if (!path) {
+          const toolArgs = args as any;
+          if (!toolArgs.path) {
             throw new Error('Missing required argument: path');
           }
-          const result = await performanceAnalyzer.analyze(path);
+          const result = await performanceAnalyzer.analyze(toolArgs.path);
           return {
             content: [
               {
@@ -62,15 +62,15 @@ async function main() {
         }
 
         case 'optimize_memory': {
-          const path = (args as any).path;
-          if (!path) {
+          const toolArgs = args as any;
+          if (!toolArgs.path) {
             throw new Error('Missing required argument: path');
           }
           const options = {
-            detectLeaks: (args as any).detectLeaks,
-            suggestFixes: (args as any).suggestFixes,
+            detectLeaks: toolArgs.detectLeaks,
+            suggestFixes: toolArgs.suggestFixes,
           };
-          const result = await memoryOptimizer.analyze(path, options);
+          const result = await memoryOptimizer.analyze(toolArgs.path, options);
           return {
             content: [
               {
@@ -82,15 +82,15 @@ async function main() {
         }
 
         case 'analyze_complexity': {
-          const path = (args as any).path;
-          if (!path) {
+          const toolArgs = args as any;
+          if (!toolArgs.path) {
             throw new Error('Missing required argument: path');
           }
           const options = {
-            maxComplexity: (args as any).maxComplexity,
-            reportFormat: (args as any).reportFormat,
+            maxComplexity: toolArgs.maxComplexity,
+            reportFormat: toolArgs.reportFormat,
           };
-          const result = await complexityAnalyzer.analyze(path, options);
+          const result = await complexityAnalyzer.analyze(toolArgs.path, options);
           return {
             content: [
               {
@@ -102,14 +102,14 @@ async function main() {
         }
 
         case 'detect_code_smells': {
-          const path = (args as any).path;
-          if (!path) {
+          const toolArgs = args as any;
+          if (!toolArgs.path) {
             throw new Error('Missing required argument: path');
           }
           const options = {
-            severity: (args as any).severity,
+            severity: toolArgs.severity,
           };
-          const result = await codeSmellDetector.analyze(path, options);
+          const result = await codeSmellDetector.analyze(toolArgs.path, options);
           return {
             content: [
               {
@@ -121,14 +121,14 @@ async function main() {
         }
 
         case 'suggest_refactoring': {
-          const path = (args as any).path;
-          if (!path) {
+          const toolArgs = args as any;
+          if (!toolArgs.path) {
             throw new Error('Missing required argument: path');
           }
           const options = {
-            focusArea: (args as any).focusArea,
+            focusArea: toolArgs.focusArea,
           };
-          const result = await refactoringSuggester.analyze(path, options);
+          const result = await refactoringSuggester.analyze(toolArgs.path, options);
           return {
             content: [
               {

@@ -71,3 +71,34 @@ export interface Suggestion {
   example?: string;
   impact?: string;
 }
+
+/**
+ * Tool argument interfaces
+ */
+export interface AnalyzePerformanceArgs {
+  path: string;
+  includeTests?: boolean;
+  threshold?: 'low' | 'medium' | 'high';
+}
+
+export interface OptimizeMemoryArgs {
+  path: string;
+  detectLeaks?: boolean;
+  suggestFixes?: boolean;
+}
+
+export interface AnalyzeComplexityArgs {
+  path: string;
+  maxComplexity?: number;
+  reportFormat?: 'summary' | 'detailed' | 'json';
+}
+
+export interface DetectCodeSmellsArgs {
+  path: string;
+  severity?: 'low' | 'medium' | 'high' | 'critical';
+}
+
+export interface SuggestRefactoringArgs {
+  path: string;
+  focusArea?: string;
+}

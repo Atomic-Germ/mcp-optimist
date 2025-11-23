@@ -1,5 +1,5 @@
 import { AnalysisResult, Finding, Suggestion } from '../types';
-import { SmellAnalyzer } from '../analyzers/smell-analyzer';
+import { SmellAnalyzer, CodeSmell } from '../analyzers/smell-analyzer';
 
 /**
  * Code Smell Detector - Identifies anti-patterns and code quality issues
@@ -117,7 +117,7 @@ export class CodeSmellDetector {
     return smellLevel >= filterLevel;
   }
 
-  private getSuggestionForSmell(smell: any): Suggestion | null {
+  private getSuggestionForSmell(smell: CodeSmell): Suggestion | null {
     switch (smell.type) {
       case 'GOD_OBJECT':
         return {

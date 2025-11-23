@@ -1,4 +1,5 @@
 import traverse from '@babel/traverse';
+import { File } from '@babel/types';
 import { ASTParser } from './ast-parser';
 
 export interface FunctionComplexity {
@@ -41,7 +42,7 @@ export class ComplexityAnalyzer {
   /**
    * Analyze all functions in AST
    */
-  private analyzeFunctions(ast: any): FunctionComplexity[] {
+  private analyzeFunctions(ast: File): FunctionComplexity[] {
     const functions: FunctionComplexity[] = [];
 
     traverse(ast, {

@@ -1,10 +1,10 @@
 import * as fs from 'fs';
 import * as parser from '@babel/parser';
 import traverse from '@babel/traverse';
-import { Node } from '@babel/types';
+import { Node, File } from '@babel/types';
 
 export interface ParseResult {
-  ast: any;
+  ast: File;
   code: string;
   filePath: string;
 }
@@ -55,7 +55,7 @@ export class ASTParser {
   /**
    * Find all loops in the AST
    */
-  findLoops(ast: any): LoopInfo[] {
+  findLoops(ast: File): LoopInfo[] {
     const loops: LoopInfo[] = [];
     const loopStack: number[] = [];
 
@@ -95,7 +95,7 @@ export class ASTParser {
   /**
    * Find all functions in the AST
    */
-  findFunctions(ast: any): FunctionInfo[] {
+  findFunctions(ast: File): FunctionInfo[] {
     const functions: FunctionInfo[] = [];
 
     traverse(ast, {
@@ -131,7 +131,7 @@ export class ASTParser {
   /**
    * Detect string concatenation in loops
    */
-  findStringConcatenationInLoops(ast: any): Array<{ line?: number; variable: string }> {
+  findStringConcatenationInLoops(ast: File): Array<{ line?: number; variable: string }> {
     const issues: Array<{ line?: number; variable: string }> = [];
     let inLoop = false;
     let loopDepth = 0;

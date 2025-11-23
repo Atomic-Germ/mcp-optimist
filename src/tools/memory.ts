@@ -1,5 +1,5 @@
 import { AnalysisResult, Finding, Suggestion } from '../types';
-import { MemoryAnalyzer } from '../analyzers/memory-analyzer';
+import { MemoryAnalyzer, AllocationInfo } from '../analyzers/memory-analyzer';
 
 /**
  * Memory Optimizer - Detects memory leaks and inefficient allocations
@@ -195,14 +195,14 @@ export class MemoryOptimizer {
     }
   }
 
-  private getAllocationSeverity(alloc: any): Finding['severity'] {
+  private getAllocationSeverity(alloc: AllocationInfo): Finding['severity'] {
     if (alloc.size === 'large') return 'high';
     if (alloc.type === 'buffer') return 'high';
     if (alloc.type === 'array' || alloc.type === 'object') return 'medium';
     return 'low';
   }
 
-  private getAllocationImpact(alloc: any): string {
+  private getAllocationImpact(alloc: AllocationInfo): string {
     switch (alloc.type) {
       case 'array':
         return 'Creates new array on each iteration, increasing GC pressure.';
@@ -219,7 +219,7 @@ export class MemoryOptimizer {
     }
   }
 
-  private getAllocationExample(alloc: any): string {
+  private getAllocationExample(alloc: AllocationInfo): string {
     switch (alloc.type) {
       case 'array':
         return '// BAD:\nfor (let i...) {\n  const temp = new Array(1000);\n}\n\n// GOOD:\nconst temp = new Array(1000);\nfor (let i...) {\n  // reuse temp\n}';
