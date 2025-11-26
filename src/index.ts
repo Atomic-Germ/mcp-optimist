@@ -11,6 +11,7 @@ import { CodeSmellDetector } from './tools/code-smells.js';
 import { RefactoringSuggester } from './tools/refactoring.js';
 import { DeadCodeDetector } from './tools/dead-code.js';
 import { DependenciesAnalyzer } from './tools/dependencies.js';
+import { HotPathsOptimizer } from './tools/hot-paths.js';
 
 /**
  * Main entry point for the Optimist MCP server
@@ -24,6 +25,7 @@ async function main() {
   const refactoringSuggester = new RefactoringSuggester();
   const deadCodeDetector = new DeadCodeDetector();
   const dependenciesAnalyzer = new DependenciesAnalyzer();
+  const hotPathsOptimizer = new HotPathsOptimizer();
 
   const server = new Server(
     {
@@ -169,6 +171,25 @@ async function main() {
             throw new Error('Missing required argument: path');
           }
           const result = await deadCodeDetector.analyze(toolArgs.path);
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(result, null, 2),
+              },
+            ],
+          };
+        }
+
+        case 'optimize_hot_paths': {
+          const toolArgs = args as any;
+          if (!toolArgs.path) {
+            throw new Error('Missing required argument: path');
+          }
+          const options = {
+            profilingData: toolArgs.profilingData,
+          };
+          const result = await hotPathsOptimizer.analyze(toolArgs.path, options);
           return {
             content: [
               {
