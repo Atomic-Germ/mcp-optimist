@@ -229,6 +229,50 @@ export class ASTParser {
   }
 
   /**
+   * Extract dependencies (imports) from a file
+   */
+  extractDependencies(filePath: string): string[] {
+    try {
+      const result = this.parseFile(filePath);
+      return this.extractDependenciesFromAST(result.ast, filePath);
+    } catch (error) {
+      console.warn(`Error extracting dependencies from ${filePath}:`, error);
+      return [];
+    }
+  }
+
+  /**
+   * Extract dependencies from AST
+   */
+  private extractDependenciesFromAST(ast: File, filePath: string): string[] {
+    const dependencies: string[] = [];
+    const dirPath = path.dirname(filePath);
+
+    traverse(ast, {
+      ImportDeclaration(path) {
+        const source = path.node.source.value;
+        const resolved = resolveImport(source, dirPath);
+        if (resolved) dependencies.push(resolved);
+      },
+      CallExpression(path) {
+        // Handle require() calls
+        if (
+          path.node.callee.type === 'Identifier' &&
+          path.node.callee.name === 'require' &&
+          path.node.arguments.length === 1 &&
+          path.node.arguments[0].type === 'StringLiteral'
+        ) {
+          const source = path.node.arguments[0].value;
+          const resolved = resolveImport(source, dirPath);
+          if (resolved) dependencies.push(resolved);
+        }
+      },
+    });
+
+    return dependencies;
+  }
+
+  /**
    * Detect string concatenation in loops
    */
   findStringConcatenationInLoops(ast: File): Array<{ line?: number; variable: string }> {
@@ -288,4 +332,43 @@ function getLoopType(node: Node): LoopInfo['type'] {
     default:
       return 'for';
   }
+}
+
+/**
+ * Resolve an import path to an absolute file path
+ */
+function resolveImport(importPath: string, fromDir: string): string | null {
+  // Skip external dependencies (node_modules, absolute paths starting with @ or single word)
+  if (importPath.startsWith('@') || !importPath.includes('/') || importPath.startsWith('.')) {
+    // Relative import - try to resolve
+    try {
+      let resolvedPath = path.resolve(fromDir, importPath);
+
+      // Try different extensions
+      const extensions = ['.js', '.jsx', '.ts', '.tsx', '.json'];
+      for (const ext of extensions) {
+        const testPath = resolvedPath + ext;
+        if (fs.existsSync(testPath)) {
+          return testPath;
+        }
+      }
+
+      // Try as directory with index file
+      for (const ext of extensions) {
+        const testPath = path.join(resolvedPath, 'index' + ext);
+        if (fs.existsSync(testPath)) {
+          return testPath;
+        }
+      }
+
+      // If no extension found, return the path without extension for now
+      return resolvedPath;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      return null;
+    }
+  }
+
+  // External dependency - return as-is for now
+  return null;
 }

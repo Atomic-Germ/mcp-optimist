@@ -10,6 +10,7 @@ import { ComplexityAnalyzer } from './tools/complexity.js';
 import { CodeSmellDetector } from './tools/code-smells.js';
 import { RefactoringSuggester } from './tools/refactoring.js';
 import { DeadCodeDetector } from './tools/dead-code.js';
+import { DependenciesAnalyzer } from './tools/dependencies.js';
 
 /**
  * Main entry point for the Optimist MCP server
@@ -22,6 +23,7 @@ async function main() {
   const codeSmellDetector = new CodeSmellDetector();
   const refactoringSuggester = new RefactoringSuggester();
   const deadCodeDetector = new DeadCodeDetector();
+  const dependenciesAnalyzer = new DependenciesAnalyzer();
 
   const server = new Server(
     {
@@ -141,8 +143,26 @@ async function main() {
           };
         }
 
-        case 'analyze_dependencies':
-        case 'find_dead_code':
+        case 'analyze_dependencies': {
+          const toolArgs = args as any;
+          if (!toolArgs.path) {
+            throw new Error('Missing required argument: path');
+          }
+          const options = {
+            checkCircular: toolArgs.checkCircular,
+            suggestUpdates: toolArgs.suggestUpdates,
+          };
+          const result = await dependenciesAnalyzer.analyze(toolArgs.path, options);
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(result, null, 2),
+              },
+            ],
+          };
+        }
+
         case 'find_dead_code': {
           const toolArgs = args as any;
           if (!toolArgs.path) {
