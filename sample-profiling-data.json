@@ -1,0 +1,106 @@
+{
+  "description": "Sample profiling data format for MCP Optimist hot-paths analysis",
+  "format": "JSON object mapping file names to execution data",
+  "version": "1.0",
+  "generated": "2025-11-26T00:00:00Z",
+  "tool": "Node.js V8 profiler or custom instrumentation",
+
+  "files": {
+    "src/utils/helpers.js": {
+      "totalExecutions": 15420,
+      "averageExecutionTime": 0.023,
+      "hotspots": [
+        {
+          "function": "processData",
+          "line": 45,
+          "executions": 8900,
+          "avgTime": 0.034,
+          "percentage": 57.7
+        },
+        {
+          "function": "validateInput",
+          "line": 23,
+          "executions": 6520,
+          "avgTime": 0.012,
+          "percentage": 42.3
+        }
+      ],
+      "loops": [
+        {
+          "line": 67,
+          "type": "for",
+          "iterations": 125000,
+          "avgIterationTime": 0.0008,
+          "totalTime": 100.0
+        }
+      ]
+    },
+
+    "src/services/api.js": {
+      "totalExecutions": 3240,
+      "averageExecutionTime": 0.156,
+      "hotspots": [
+        {
+          "function": "makeHttpRequest",
+          "line": 89,
+          "executions": 3240,
+          "avgTime": 0.156,
+          "percentage": 100.0
+        }
+      ],
+      "loops": [
+        {
+          "line": 112,
+          "type": "forEach",
+          "iterations": 8500,
+          "avgIterationTime": 0.0021,
+          "totalTime": 17.85
+        }
+      ]
+    }
+  },
+
+  "schema": {
+    "files": {
+      "[filename]": {
+        "totalExecutions": "number - total times file was executed",
+        "averageExecutionTime": "number - average execution time in seconds",
+        "hotspots": "array - most frequently called functions",
+        "loops": "array - loop execution statistics"
+      }
+    },
+    "hotspots": {
+      "function": "string - function name",
+      "line": "number - line number",
+      "executions": "number - execution count",
+      "avgTime": "number - average execution time in seconds",
+      "percentage": "number - percentage of total file execution time"
+    },
+    "loops": {
+      "line": "number - line number where loop starts",
+      "type": "string - loop type (for, while, forEach, etc.)",
+      "iterations": "number - total iterations across all executions",
+      "avgIterationTime": "number - average time per iteration in seconds",
+      "totalTime": "number - total time spent in loop in seconds"
+    }
+  },
+
+  "collection_methods": [
+    {
+      "method": "Node.js V8 Profiler",
+      "command": "node --prof app.js",
+      "output": "isolate-*.log files",
+      "converter": "Use tools like v8-profiler or clinic.js to convert to JSON"
+    },
+    {
+      "method": "Custom Instrumentation",
+      "example": "Add console.time/timeEnd around functions and loops",
+      "output": "Custom JSON format matching this schema"
+    },
+    {
+      "method": "APM Tools",
+      "tools": ["New Relic", "Datadog", "AppDynamics"],
+      "output": "Export performance data as JSON"
+    }
+  ]
+}

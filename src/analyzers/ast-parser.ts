@@ -32,6 +32,16 @@ export interface FunctionInfo {
  */
 export class ASTParser {
   private supportedExtensions = ['.js', '.jsx', '.ts', '.tsx', '.py'];
+  private astCache = new Map<string, ParseResult>();
+  private analysisCache = new Map<string, any>();
+
+  /**
+   * Clear caches (useful for memory management or when files change)
+   */
+  clearCache(): void {
+    this.astCache.clear();
+    this.analysisCache.clear();
+  }
 
   /**
    * Expand a path (file, directory, or glob) into a list of files to analyze
@@ -139,6 +149,11 @@ export class ASTParser {
    * Parse source code file to AST
    */
   parseFile(filePath: string): ParseResult {
+    // Check cache first
+    if (this.astCache.has(filePath)) {
+      return this.astCache.get(filePath)!;
+    }
+
     // Validate that the path exists and is a file
     if (!fs.existsSync(filePath)) {
       throw new Error(`File does not exist: ${filePath}`);
@@ -158,7 +173,12 @@ export class ASTParser {
     }
 
     const code = fs.readFileSync(filePath, 'utf-8');
-    return this.parseCode(code, filePath);
+    const result = this.parseCode(code, filePath);
+
+    // Cache the result
+    this.astCache.set(filePath, result);
+
+    return result;
   }
 
   /**
@@ -201,7 +221,12 @@ export class ASTParser {
   /**
    * Find all loops in the AST
    */
-  findLoops(ast: File): LoopInfo[] {
+  findLoops(ast: File, filePath?: string): LoopInfo[] {
+    const cacheKey = `loops_${filePath || 'unknown'}`;
+    if (this.analysisCache.has(cacheKey)) {
+      return this.analysisCache.get(cacheKey);
+    }
+
     const loops: LoopInfo[] = [];
     const loopStack: number[] = [];
 
@@ -235,6 +260,8 @@ export class ASTParser {
       }
     });
 
+    // Cache the result
+    this.analysisCache.set(cacheKey, loops);
     return loops;
   }
 

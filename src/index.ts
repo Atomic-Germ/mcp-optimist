@@ -191,6 +191,7 @@ async function main() {
           }
           const options = {
             profilingData: toolArgs.profilingData,
+            reportFormat: toolArgs.reportFormat,
           };
           const result = await hotPathsOptimizer.analyze(toolArgs.path, options);
           return {

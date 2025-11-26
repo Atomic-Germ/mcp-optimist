@@ -9,7 +9,7 @@ export class HotPathsOptimizer {
    */
   async analyze(
     inputPath: string,
-    options: { profilingData?: string } = {}
+    options: { profilingData?: string; reportFormat?: 'summary' | 'detailed' } = {}
   ): Promise<AnalysisResult> {
     const startTime = Date.now();
     const findings: Finding[] = [];
@@ -44,11 +44,20 @@ export class HotPathsOptimizer {
       // Analyze hot paths in each file
       const hotPathsAnalysis = await this.analyzeHotPaths(filesToAnalyze, parser, options);
 
+      // Extract parse errors from analysis
+      const parseErrors = hotPathsAnalysis.find((item: any) => item.parseErrors)?.parseErrors || [];
+      const cleanAnalysis = hotPathsAnalysis.filter((item: any) => !item.parseErrors);
+
       // Extract findings and suggestions
-      this.extractFindingsAndSuggestions(hotPathsAnalysis, findings, suggestions);
+      this.extractFindingsAndSuggestions(cleanAnalysis, findings, suggestions);
 
       // Calculate metrics
-      const metrics = this.calculateMetrics(hotPathsAnalysis);
+      const metrics = this.calculateMetrics(cleanAnalysis);
+
+      // Add detailed per-file metrics if requested
+      if (options.reportFormat === 'detailed') {
+        metrics.fileDetails = this.calculateDetailedMetrics(cleanAnalysis);
+      }
 
       let duration = Date.now() - startTime;
       if (duration <= 0) duration = 1; // Ensure non-zero duration for tests and metrics
@@ -66,6 +75,8 @@ export class HotPathsOptimizer {
           timestamp: new Date().toISOString(),
           duration,
           filesAnalyzed: filesToAnalyze.length,
+          filesProcessed: cleanAnalysis.length,
+          parseErrors: parseErrors.length > 0 ? parseErrors : undefined,
         },
       };
     } catch (error) {
@@ -93,9 +104,10 @@ export class HotPathsOptimizer {
   private async analyzeHotPaths(
     files: string[],
     parser: any,
-    options: { profilingData?: string }
+    options: { profilingData?: string; reportFormat?: 'summary' | 'detailed' }
   ): Promise<any[]> {
     const analysis: any[] = [];
+    const parseErrors: any[] = [];
 
     // Load profiling data if provided
     const profilingData = options.profilingData
@@ -134,8 +146,19 @@ export class HotPathsOptimizer {
         };
         analysis.push(fileAnalysis);
       } catch (error) {
+        const errorInfo = {
+          file,
+          error: error instanceof Error ? error.message : String(error),
+          type: 'parse_error'
+        };
+        parseErrors.push(errorInfo);
         console.warn(`Error analyzing hot paths in ${file}:`, error);
       }
+    }
+
+    // Include parse errors in the analysis result for metadata
+    if (parseErrors.length > 0) {
+      analysis.push({ parseErrors });
     }
 
     return analysis;
@@ -675,6 +698,39 @@ export class HotPathsOptimizer {
       computationalHotspots: hotspots,
       filesAnalyzed: analysis.length,
     };
+  }
+
+  private calculateDetailedMetrics(analysis: any[]): Record<string, any> {
+    const fileDetails: Record<string, any> = {};
+
+    for (const fileAnalysis of analysis) {
+      const { file, loops, recursiveFunctions, frequentCalls, computationalHotspots } = fileAnalysis;
+
+      fileDetails[file] = {
+        loops: {
+          count: loops.length,
+          nested: loops.filter((l: any) => l.nested).length,
+          byType: loops.reduce((acc: Record<string, number>, loop: any) => {
+            acc[loop.type] = (acc[loop.type] || 0) + 1;
+            return acc;
+          }, {}),
+          locations: loops.map((l: any) => ({ line: l.location?.start?.line, type: l.type, complexity: l.complexity }))
+        },
+        functions: {
+          recursive: recursiveFunctions.length,
+          frequentCalls: frequentCalls.length
+        },
+        hotspots: {
+          computational: computationalHotspots.length,
+          byType: computationalHotspots.reduce((acc: Record<string, number>, h: any) => {
+            acc[h.type] = (acc[h.type] || 0) + 1;
+            return acc;
+          }, {})
+        }
+      };
+    }
+
+    return fileDetails;
   }
 
   private generateSummary(findings: Finding[], metrics: Record<string, any>): string {

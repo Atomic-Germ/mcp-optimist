@@ -43,6 +43,8 @@ export interface AnalysisResult {
     timestamp: string;
     duration: number;
     filesAnalyzed: number;
+    filesProcessed?: number;
+    parseErrors?: any[];
   };
 }
 

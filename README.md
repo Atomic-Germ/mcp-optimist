@@ -372,3 +372,43 @@ Analyze function complexity and code smells:
 ---
 
 For more examples, see the [API Reference](docs/API_REFERENCE.md).
+
+## Profiling Data Format
+
+The `optimize_hot_paths` tool supports optional profiling data to enhance analysis with real execution metrics. Create a JSON file with this structure:
+
+```json
+{
+  "files": {
+    "src/utils/helpers.js": {
+      "totalExecutions": 15420,
+      "averageExecutionTime": 0.023,
+      "hotspots": [
+        {
+          "function": "processData",
+          "line": 45,
+          "executions": 8900,
+          "avgTime": 0.034,
+          "percentage": 57.7
+        }
+      ],
+      "loops": [
+        {
+          "line": 67,
+          "type": "for",
+          "iterations": 125000,
+          "avgIterationTime": 0.0008,
+          "totalTime": 100.0
+        }
+      ]
+    }
+  }
+}
+```
+
+**Collection Methods:**
+- **Node.js V8 Profiler**: `node --prof app.js` + convert logs to JSON
+- **Custom Instrumentation**: Add `console.time()`/`console.timeEnd()` around functions
+- **APM Tools**: Export from New Relic, Datadog, or AppDynamics
+
+See `sample-profiling-data.json` for a complete example.

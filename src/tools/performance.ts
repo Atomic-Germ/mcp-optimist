@@ -67,7 +67,7 @@ export class PerformanceAnalyzer {
             const { ast } = parseResult;
 
             // Analyze loops
-            loops = this.parser.findLoops(ast);
+            loops = this.parser.findLoops(ast, filePath);
             // Analyze functions
             functions = this.parser.findFunctions(ast);
             // Detect string concatenation in loops

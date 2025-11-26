@@ -532,8 +532,61 @@ Analyze and optimize frequently executed code paths.
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `path` | string | ✅ | Directory or file path to analyze |
-| `profilingData` | string | ❌ | Path to profiling data file |
-| `threshold` | number | ❌ | Minimum execution frequency (default: 1000) |
+| `profilingData` | string | ❌ | Path to profiling data file for enhanced analysis |
+| `reportFormat` | 'summary' \| 'detailed' | ❌ | Report detail level (default: 'summary') |
+
+#### Example Request
+
+```typescript
+{
+  tool: "optimize_hot_paths",
+  arguments: {
+    path: "./src",
+    profilingData: "./profiling-data.json",
+    reportFormat: "detailed"
+  }
+}
+```
+
+#### Detailed Report Format
+
+When `reportFormat` is set to `'detailed'`, the response includes per-file metrics:
+
+```typescript
+{
+  data: {
+    metrics: {
+      fileDetails: {
+        "src/utils/helpers.js": {
+          loops: {
+            count: 5,
+            nested: 1,
+            byType: { "for": 3, "while": 2 },
+            locations: [
+              { line: 23, type: "for", complexity: 2.5 },
+              // ... more loop details
+            ]
+          },
+          functions: {
+            recursive: 0,
+            frequentCalls: 2
+          },
+          hotspots: {
+            computational: 3,
+            byType: { "STRING_CONCAT_IN_LOOP": 2, "MATH_IN_LOOP": 1 }
+          }
+        }
+      }
+    }
+  },
+  metadata: {
+    filesProcessed: 8,
+    parseErrors: [
+      { file: "src/broken.js", error: "SyntaxError: Unexpected token" }
+    ]
+  }
+}
+```
 
 ### suggest_refactoring
 
