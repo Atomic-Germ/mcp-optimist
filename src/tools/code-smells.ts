@@ -59,7 +59,7 @@ export class CodeSmellDetector {
       // Analyze each file
       for (const filePath of filesToAnalyze) {
         try {
-          const analysis = this.analyzer.analyzeQuality(filePath).smells;
+          const analysis = (await this.analyzer.analyzeQuality(filePath)).smells;
 
           // Process all smell types
           const allSmells = [

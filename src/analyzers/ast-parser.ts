@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { glob } from 'glob';
-import { DEFAULT_IGNORES, toGlobIgnores } from '../config/default-ignore';
+import { DEFAULT_IGNORES } from '../config/default-ignore';
 import * as parser from '@babel/parser';
 import traverse from '@babel/traverse';
 import { Node, File } from '@babel/types';
@@ -109,12 +109,9 @@ export class ASTParser {
   ): string[] {
     try {
       const ignoreList = options?.overrideIgnore ?? DEFAULT_IGNORES;
-      const ignoreGlobs = options?.includeIgnored ? [] : toGlobIgnores(ignoreList);
-
       const matches = glob.sync(pattern, {
         absolute: true,
         nodir: true, // Only files, not directories
-        ignore: ignoreGlobs,
       });
 
       // Filter to only supported file types

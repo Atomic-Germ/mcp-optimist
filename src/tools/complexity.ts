@@ -63,7 +63,8 @@ export class ComplexityAnalyzer {
       // Analyze each file
       for (const filePath of filesToAnalyze) {
         try {
-          const analysis = this.analyzer.analyzeQuality(filePath).complexity;
+          const qualityAnalysis = await this.analyzer.analyzeQuality(filePath);
+          const analysis = qualityAnalysis.complexity;
 
           // Aggregate metrics
           totalFunctions += analysis.totalFunctions;

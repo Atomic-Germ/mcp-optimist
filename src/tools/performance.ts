@@ -1,5 +1,6 @@
 import { AnalysisResult, Finding, Suggestion } from '../types';
 import { ASTParser } from '../analyzers/ast-parser';
+import { PythonShell } from 'python-shell';
 
 /**
  * Performance Analyzer - Identifies performance bottlenecks and inefficiencies
@@ -50,11 +51,29 @@ export class PerformanceAnalyzer {
       // Analyze each file
       for (const filePath of filesToAnalyze) {
         try {
-          const parseResult = this.parser.parseFile(filePath);
-          const { ast } = parseResult;
+          let loops: any[] = [];
+          let functions: any[] = [];
+          let stringConcatIssues: any[] = [];
 
-          // Analyze loops
-          const loops = this.parser.findLoops(ast);
+          if (filePath.endsWith('.py')) {
+            // Analyze Python file
+            const pythonAnalysis = await this.analyzePythonPerformance(filePath);
+            loops = pythonAnalysis.loops;
+            functions = pythonAnalysis.functions;
+            stringConcatIssues = pythonAnalysis.stringConcatIssues;
+          } else {
+            const parseResult = this.parser.parseFile(filePath);
+            const { ast } = parseResult;
+
+            // Analyze loops
+            loops = this.parser.findLoops(ast);
+            // Analyze functions
+            functions = this.parser.findFunctions(ast);
+            // Detect string concatenation in loops
+            stringConcatIssues = this.parser.findStringConcatenationInLoops(ast);
+          }
+
+          // Process loops
           metrics.totalLoops += loops.length;
           const fileMaxDepth = Math.max(...loops.map((l) => l.depth), 0);
           metrics.maxLoopDepth = Math.max(metrics.maxLoopDepth, fileMaxDepth);
@@ -107,11 +126,9 @@ export class PerformanceAnalyzer {
           });
 
           // Analyze functions
-          const functions = this.parser.findFunctions(ast);
           metrics.totalFunctions += functions.length;
 
           // Detect string concatenation in loops
-          const stringConcatIssues = this.parser.findStringConcatenationInLoops(ast);
           stringConcatIssues.forEach((issue) => {
             findings.push({
               type: 'INEFFICIENT_STRING_CONCAT',
@@ -224,5 +241,111 @@ export class PerformanceAnalyzer {
     }
 
     return summary;
+  }
+  private async analyzePythonPerformance(filePath: string): Promise<{
+    loops: any[];
+    functions: any[];
+    stringConcatIssues: any[];
+  }> {
+    return new Promise((resolve) => {
+      const pythonCode = `
+import ast
+import json
+import sys
+
+def analyze_file(file_path):
+    try:
+        with open(file_path, 'r') as f:
+            content = f.read()
+        
+        tree = ast.parse(content)
+        loops = []
+        functions = []
+        string_concat_issues = []
+        
+        # Track loop depth
+        loop_stack = []
+        
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef):
+                functions.append({
+                    'name': node.name,
+                    'line': node.lineno,
+                    'params': len(node.args.args)
+                })
+            
+            elif isinstance(node, (ast.For, ast.While)):
+                depth = len(loop_stack) + 1
+                loop_stack.append(depth)
+                
+                loop_type = 'for' if isinstance(node, ast.For) else 'while'
+                loops.append({
+                    'type': loop_type,
+                    'depth': depth,
+                    'line': node.lineno,
+                    'column': 0
+                })
+                
+                # Check for string concat in loop
+                for child in ast.walk(node):
+                    if isinstance(child, ast.AugAssign) and isinstance(child.op, ast.Add):
+                        if isinstance(child.value, ast.Str):
+                            string_concat_issues.append({
+                                'line': child.lineno,
+                                'variable': 'string_var'  # simplified
+                            })
+                
+                loop_stack.pop()
+        
+        result = {
+            'loops': loops,
+            'functions': functions,
+            'stringConcatIssues': string_concat_issues
+        }
+        
+        print(json.dumps(result))
+    except Exception as e:
+        print(json.dumps({
+            'loops': [],
+            'functions': [],
+            'stringConcatIssues': []
+        }))
+
+if __name__ == '__main__':
+    analyze_file(sys.argv[1])
+`;
+
+      const pyshell = new PythonShell(pythonCode, {
+        args: [filePath],
+        mode: 'text',
+      });
+
+      let output = '';
+      pyshell.on('message', (message) => {
+        output += message;
+      });
+
+      pyshell.on('close', () => {
+        try {
+          const data = JSON.parse(output.trim());
+          resolve(data);
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (e) {
+          resolve({
+            loops: [],
+            functions: [],
+            stringConcatIssues: [],
+          });
+        }
+      });
+
+      pyshell.on('error', () => {
+        resolve({
+          loops: [],
+          functions: [],
+          stringConcatIssues: [],
+        });
+      });
+    });
   }
 }

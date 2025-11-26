@@ -1,6 +1,7 @@
 import traverse from '@babel/traverse';
 import { File } from '@babel/types';
 import { ASTParser } from './ast-parser';
+import { PythonShell } from 'python-shell';
 
 export interface FunctionComplexity {
   name: string;
@@ -52,13 +53,224 @@ export class QualityAnalyzer {
   /**
    * Analyze code quality (complexity and smells)
    */
-  analyzeQuality(filePath: string): QualityAnalysis {
+  async analyzeQuality(filePath: string): Promise<QualityAnalysis> {
+    if (filePath.endsWith('.py')) {
+      return await this.analyzePythonQuality(filePath);
+    }
+
     const { ast } = this.parser.parseFile(filePath);
 
     return {
       complexity: this.analyzeComplexity(ast),
       smells: this.analyzeSmells(ast),
     };
+  }
+
+  /**
+   * Analyze Python code quality
+   */
+  private async analyzePythonQuality(filePath: string): Promise<QualityAnalysis> {
+    return new Promise((resolve) => {
+      const pythonCode = `
+import ast
+import json
+import sys
+
+def calculate_cyclomatic_complexity(node):
+    complexity = 1
+    for child in ast.walk(node):
+        if isinstance(child, (ast.If, ast.For, ast.While, ast.With, ast.Try, ast.ExceptHandler)):
+            complexity += 1
+        elif isinstance(child, ast.BoolOp) and len(child.values) > 1:
+            complexity += len(child.values) - 1
+    return complexity
+
+def calculate_cognitive_complexity(node):
+    complexity = 0
+    for child in ast.walk(node):
+        if isinstance(child, (ast.If, ast.For, ast.While, ast.Try)):
+            complexity += 1
+    return complexity
+
+def analyze_file(file_path):
+    try:
+        with open(file_path, 'r') as f:
+            content = f.read()
+        
+        tree = ast.parse(content)
+        functions = []
+        
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef):
+                cyclomatic = calculate_cyclomatic_complexity(node)
+                cognitive = calculate_cognitive_complexity(node)
+                nesting = 0
+                
+                functions.append({
+                    'name': node.name,
+                    'line': node.lineno,
+                    'cyclomatic': cyclomatic,
+                    'cognitive': cognitive,
+                    'nestingDepth': nesting,
+                    'decisionPoints': cyclomatic - 1
+                })
+        
+        smells = {
+            'godObjects': [],
+            'longParameterLists': [],
+            'longMethods': [],
+            'magicNumbers': [],
+            'emptyCatches': []
+        }
+        
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef):
+                if len(node.args.args) > 5:
+                    smells['longParameterLists'].append({
+                        'type': 'LONG_PARAMETER_LIST',
+                        'line': node.lineno,
+                        'description': f'Function {node.name} has {len(node.args.args)} parameters',
+                        'severity': 'medium'
+                    })
+                
+                if hasattr(node, 'end_lineno') and node.end_lineno:
+                    lines = node.end_lineno - node.lineno
+                    if lines > 50:
+                        smells['longMethods'].append({
+                            'type': 'LONG_METHOD',
+                            'line': node.lineno,
+                            'description': f'Function {node.name} is {lines} lines long',
+                            'severity': 'medium'
+                        })
+            
+            elif isinstance(node, ast.Try):
+                for handler in node.handlers:
+                    if not handler.body:
+                        smells['emptyCatches'].append({
+                            'type': 'EMPTY_CATCH',
+                            'line': handler.lineno,
+                            'description': 'Empty except block',
+                            'severity': 'low'
+                        })
+            
+            elif isinstance(node, ast.Constant) and isinstance(node.value, int) and node.value > 10:
+                smells['magicNumbers'].append({
+                    'type': 'MAGIC_NUMBER',
+                    'line': node.lineno,
+                    'description': f'Magic number: {node.value}',
+                    'severity': 'low'
+                })
+        
+        result = {
+            'complexity': {
+                'functions': functions,
+                'totalFunctions': len(functions),
+                'averageComplexity': sum(f['cyclomatic'] for f in functions) / len(functions) if functions else 0,
+                'maxComplexity': max((f['cyclomatic'] for f in functions), default=0),
+                'averageCognitive': sum(f['cognitive'] for f in functions) / len(functions) if functions else 0,
+                'totalDecisionPoints': sum(f['decisionPoints'] for f in functions),
+                'mostComplexFunction': max(functions, key=lambda f: f['cyclomatic'], default={'name': None})['name']
+            },
+            'smells': {
+                'godObjects': smells['godObjects'],
+                'longParameterLists': smells['longParameterLists'],
+                'longMethods': smells['longMethods'],
+                'magicNumbers': smells['magicNumbers'],
+                'emptyCatches': smells['emptyCatches'],
+                'classMetrics': {'total': 0, 'large': 0},
+                'functionMetrics': {'total': len(functions), 'long': len(smells['longMethods'])}
+            }
+        }
+        
+        print(json.dumps(result))
+    except Exception as e:
+        print(json.dumps({
+            'complexity': {
+                'functions': [],
+                'totalFunctions': 0,
+                'averageComplexity': 0,
+                'maxComplexity': 0,
+                'averageCognitive': 0,
+                'totalDecisionPoints': 0,
+                'mostComplexFunction': None
+            },
+            'smells': {
+                'godObjects': [],
+                'longParameterLists': [],
+                'longMethods': [],
+                'magicNumbers': [],
+                'emptyCatches': [],
+                'classMetrics': {'total': 0, 'large': 0},
+                'functionMetrics': {'total': 0, 'long': 0}
+            }
+        }))
+
+if __name__ == '__main__':
+    analyze_file(sys.argv[1])
+`;
+
+      const pyshell = new PythonShell(pythonCode, {
+        args: [filePath],
+        mode: 'text',
+      });
+
+      let output = '';
+      pyshell.on('message', (message) => {
+        output += message;
+      });
+
+      pyshell.on('close', () => {
+        try {
+          const data = JSON.parse(output.trim());
+          resolve(data);
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (e) {
+          resolve({
+            complexity: {
+              functions: [],
+              totalFunctions: 0,
+              averageComplexity: 0,
+              maxComplexity: 0,
+              averageCognitive: 0,
+              totalDecisionPoints: 0,
+              mostComplexFunction: undefined,
+            },
+            smells: {
+              godObjects: [],
+              longParameterLists: [],
+              longMethods: [],
+              magicNumbers: [],
+              emptyCatches: [],
+              classMetrics: { total: 0, large: 0 },
+              functionMetrics: { total: 0, long: 0 },
+            },
+          });
+        }
+      });
+
+      pyshell.on('error', () => {
+        resolve({
+          complexity: {
+            functions: [],
+            totalFunctions: 0,
+            averageComplexity: 0,
+            maxComplexity: 0,
+            averageCognitive: 0,
+            totalDecisionPoints: 0,
+            mostComplexFunction: undefined,
+          },
+          smells: {
+            godObjects: [],
+            longParameterLists: [],
+            longMethods: [],
+            magicNumbers: [],
+            emptyCatches: [],
+            classMetrics: { total: 0, large: 0 },
+            functionMetrics: { total: 0, long: 0 },
+          },
+        });
+      });
+    });
   }
 
   /**
