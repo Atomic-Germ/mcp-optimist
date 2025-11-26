@@ -243,17 +243,19 @@ export class PerformanceAnalyzer {
 
     return summary;
   }
-  private async analyzePythonPerformance(filePath: string): Promise<{
+  private analyzePythonPerformance(filePath: string): Promise<{
     loops: any[];
     functions: any[];
     stringConcatIssues: any[];
   }> {
     return new Promise((resolve) => {
-      const scriptPath = path.join(__dirname, '../../python/performance_analyzer.py');
+      const scriptPath = path.join(process.cwd(), 'src/python/performance_analyzer.py');
+      const absoluteFilePath = path.resolve(filePath);
 
       const pyshell = new PythonShell(scriptPath, {
-        args: [filePath],
+        args: [absoluteFilePath],
         mode: 'text',
+        pythonPath: 'python3',
       });
 
       let output = '';

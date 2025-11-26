@@ -70,13 +70,16 @@ export class QualityAnalyzer {
   /**
    * Analyze Python code quality
    */
-  private async analyzePythonQuality(filePath: string): Promise<QualityAnalysis> {
+  private analyzePythonQuality(filePath: string): Promise<QualityAnalysis> {
     return new Promise((resolve) => {
-      const scriptPath = path.join(__dirname, '../../python/quality_analyzer.py');
+      // Use process.cwd() to get the project root, then navigate to the python script
+      const scriptPath = path.join(process.cwd(), 'src/python/quality_analyzer.py');
+      const absoluteFilePath = path.resolve(filePath);
 
       const pyshell = new PythonShell(scriptPath, {
-        args: [filePath],
+        args: [absoluteFilePath],
         mode: 'text',
+        pythonPath: 'python3',
       });
 
       let output = '';
@@ -90,6 +93,7 @@ export class QualityAnalyzer {
           resolve(data);
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (e) {
+          console.error('Failed to parse Python output:', output);
           resolve({
             complexity: {
               functions: [],
@@ -113,7 +117,8 @@ export class QualityAnalyzer {
         }
       });
 
-      pyshell.on('error', () => {
+      pyshell.on('error', (err) => {
+        console.error('Python script error:', err);
         resolve({
           complexity: {
             functions: [],
