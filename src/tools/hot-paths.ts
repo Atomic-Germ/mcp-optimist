@@ -104,13 +104,32 @@ export class HotPathsOptimizer {
 
     for (const file of files) {
       try {
-        const ast = parser.parseFile(file);
+        let loops: any[] = [];
+        let recursiveFunctions: any[] = [];
+        let frequentCalls: any[] = [];
+        let computationalHotspots: any[] = [];
+
+        if (file.endsWith('.py')) {
+          // For Python files, use the Python performance analyzer
+          const pythonAnalysis = await this.analyzePythonHotPaths(file);
+          loops = pythonAnalysis.loops || [];
+          recursiveFunctions = pythonAnalysis.recursiveFunctions || [];
+          frequentCalls = pythonAnalysis.frequentCalls || [];
+          computationalHotspots = pythonAnalysis.computationalHotspots || [];
+        } else {
+          const ast = parser.parseFile(file);
+          loops = this.findLoops(ast);
+          recursiveFunctions = this.findRecursiveFunctions(ast);
+          frequentCalls = this.findFrequentCallPatterns(ast);
+          computationalHotspots = this.findComputationalHotspots(ast);
+        }
+
         const fileAnalysis = {
           file,
-          loops: this.findLoops(ast),
-          recursiveFunctions: this.findRecursiveFunctions(ast),
-          frequentCalls: this.findFrequentCallPatterns(ast),
-          computationalHotspots: this.findComputationalHotspots(ast),
+          loops,
+          recursiveFunctions,
+          frequentCalls,
+          computationalHotspots,
           profilingData: profilingData ? this.getProfilingDataForFile(profilingData, file) : null,
         };
         analysis.push(fileAnalysis);
@@ -371,6 +390,81 @@ export class HotPathsOptimizer {
     return hotspots;
   }
 
+  private async loadProfilingData(profilingDataPath: string): Promise<any> {
+    try {
+      const fs = require('fs').promises;
+      const data = await fs.readFile(profilingDataPath, 'utf8');
+      return JSON.parse(data);
+    } catch (error) {
+      console.warn(`Failed to load profiling data from ${profilingDataPath}:`, error);
+      return null;
+    }
+  }
+
+  private analyzePythonHotPaths(filePath: string): Promise<{
+    loops: any[];
+    recursiveFunctions: any[];
+    frequentCalls: any[];
+    computationalHotspots: any[];
+  }> {
+    return new Promise((resolve) => {
+      const { PythonShell } = require('python-shell');
+      const path = require('path');
+
+      const scriptPath = path.join(__dirname, '../python/performance_analyzer.py');
+      const absoluteFilePath = path.resolve(filePath);
+
+      const pyshell = new PythonShell(scriptPath, {
+        args: [absoluteFilePath],
+        mode: 'text',
+        pythonPath: 'python3',
+      });
+
+      let output = '';
+      pyshell.on('message', (message: string) => {
+        output += message;
+      });
+
+      pyshell.on('close', () => {
+        try {
+          const data = JSON.parse(output.trim());
+          // Transform the data to match expected format
+          resolve({
+            loops: (data.loops || []).map((loop: any) => ({
+              type: loop.type,
+              location: { start: { line: loop.line } },
+              complexity: 1,
+              nested: false,
+            })),
+            recursiveFunctions: [], // Python analyzer doesn't detect recursion yet
+            frequentCalls: [], // Python analyzer doesn't detect frequent calls yet
+            computationalHotspots: (data.stringConcatIssues || []).map((issue: any) => ({
+              type: 'STRING_CONCAT_IN_LOOP',
+              location: { start: { line: issue.line } },
+              context: 'loop',
+            })),
+          });
+        } catch (e) {
+          resolve({
+            loops: [],
+            recursiveFunctions: [],
+            frequentCalls: [],
+            computationalHotspots: [],
+          });
+        }
+      });
+
+      pyshell.on('error', () => {
+        resolve({
+          loops: [],
+          recursiveFunctions: [],
+          frequentCalls: [],
+          computationalHotspots: [],
+        });
+      });
+    });
+  }
+
   private calculateLoopComplexity(loopNode: any): number {
     let complexity = 1; // Base complexity
 
@@ -411,17 +505,6 @@ export class HotPathsOptimizer {
 
     traverse(loopNode.body);
     return complexity;
-  }
-
-  private async loadProfilingData(profilingPath: string): Promise<any> {
-    try {
-      const fs = await import('fs');
-      const data = fs.readFileSync(profilingPath, 'utf-8');
-      return JSON.parse(data);
-    } catch (error) {
-      console.warn('Could not load profiling data:', error);
-      return null;
-    }
   }
 
   private getProfilingDataForFile(profilingData: any, filePath: string): any {
