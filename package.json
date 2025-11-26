@@ -23,7 +23,7 @@
     "typecheck": "tsc --noEmit",
     "typecheck:watch": "tsc --noEmit --watch",
     "prepublishOnly": "pnpm run clean && pnpm run build",
-    "prepare": "husky"
+    "prepare": "pnpm run format && pnpm run lint && husky"
   },
   "keywords": [
     "mcp",

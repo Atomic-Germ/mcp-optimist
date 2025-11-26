@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { glob } from 'glob';
+import { DEFAULT_IGNORES, toGlobIgnores } from '../config/default-ignore';
 import * as parser from '@babel/parser';
 import traverse from '@babel/traverse';
 import { Node, File } from '@babel/types';
@@ -35,10 +36,13 @@ export class ASTParser {
   /**
    * Expand a path (file, directory, or glob) into a list of files to analyze
    */
-  expandPath(inputPath: string): string[] {
+  expandPath(
+    inputPath: string,
+    options?: { includeIgnored?: boolean; overrideIgnore?: string[] }
+  ): string[] {
     // If path doesn't exist, treat as glob pattern
     if (!fs.existsSync(inputPath)) {
-      return this.expandGlob(inputPath);
+      return this.expandGlob(inputPath, options);
     }
 
     const stats = fs.statSync(inputPath);
@@ -48,10 +52,10 @@ export class ASTParser {
       return this.isSupportedFile(inputPath) ? [inputPath] : [];
     } else if (stats.isDirectory()) {
       // Directory - recursively find all supported files
-      return this.findFilesInDirectory(inputPath);
+      return this.findFilesInDirectory(inputPath, options);
     } else {
       // Not a file or directory, treat as glob
-      return this.expandGlob(inputPath);
+      return this.expandGlob(inputPath, options);
     }
   }
 
@@ -66,8 +70,12 @@ export class ASTParser {
   /**
    * Recursively find all supported files in a directory
    */
-  private findFilesInDirectory(dirPath: string): string[] {
+  private findFilesInDirectory(
+    dirPath: string,
+    options?: { includeIgnored?: boolean; overrideIgnore?: string[] }
+  ): string[] {
     const files: string[] = [];
+    const ignores = options?.overrideIgnore ?? DEFAULT_IGNORES;
 
     const walkDirectory = (currentPath: string) => {
       const items = fs.readdirSync(currentPath);
@@ -77,8 +85,9 @@ export class ASTParser {
         const stats = fs.statSync(fullPath);
 
         if (stats.isDirectory()) {
-          // Skip node_modules and other common directories
-          if (!['node_modules', '.git', 'dist', 'build', '.next'].includes(item)) {
+          // Decide whether to skip this directory based on ignores and options
+          const shouldSkip = !options?.includeIgnored && ignores.includes(item);
+          if (!shouldSkip) {
             walkDirectory(fullPath);
           }
         } else if (stats.isFile() && this.isSupportedFile(fullPath)) {
@@ -94,11 +103,18 @@ export class ASTParser {
   /**
    * Expand a glob pattern into matching files
    */
-  private expandGlob(pattern: string): string[] {
+  private expandGlob(
+    pattern: string,
+    options?: { includeIgnored?: boolean; overrideIgnore?: string[] }
+  ): string[] {
     try {
+      const ignoreList = options?.overrideIgnore ?? DEFAULT_IGNORES;
+      const ignoreGlobs = options?.includeIgnored ? [] : toGlobIgnores(ignoreList);
+
       const matches = glob.sync(pattern, {
         absolute: true,
         nodir: true, // Only files, not directories
+        ignore: ignoreGlobs,
       });
 
       // Filter to only supported file types
