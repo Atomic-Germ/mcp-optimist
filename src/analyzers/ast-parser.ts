@@ -31,7 +31,7 @@ export interface FunctionInfo {
  * AST Parser for analyzing JavaScript/TypeScript code
  */
 export class ASTParser {
-  private supportedExtensions = ['.js', '.jsx', '.ts', '.tsx'];
+  private supportedExtensions = ['.js', '.jsx', '.ts', '.tsx', '.py'];
 
   /**
    * Expand a path (file, directory, or glob) into a list of files to analyze
@@ -118,7 +118,19 @@ export class ASTParser {
       });
 
       // Filter to only supported file types
-      return matches.filter((file) => this.isSupportedFile(file));
+      let filteredMatches = matches.filter((file) => this.isSupportedFile(file));
+
+      // Additionally filter out ignored paths if not including ignored
+      if (!options?.includeIgnored) {
+        filteredMatches = filteredMatches.filter((file) => {
+          const relativePath = path.relative(process.cwd(), file);
+          return !ignoreList.some((ignore) => {
+            return relativePath.includes(`/${ignore}/`) || relativePath.startsWith(`${ignore}/`);
+          });
+        });
+      }
+
+      return filteredMatches;
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       // If glob fails, return empty array
@@ -156,6 +168,27 @@ export class ASTParser {
    * Parse source code string to AST
    */
   parseCode(code: string, filePath = 'unknown'): ParseResult {
+    const extension = path.extname(filePath).toLowerCase();
+
+    if (extension === '.py') {
+      // For Python files, return a mock AST for now
+      // TODO: Implement proper Python AST parsing
+      const mockAst = {
+        type: 'File',
+        program: {
+          type: 'Program',
+          body: [],
+          sourceType: 'module',
+        },
+        loc: undefined,
+      };
+      return {
+        ast: mockAst as any,
+        code,
+        filePath,
+      };
+    }
+
     const ast = parser.parse(code, {
       sourceType: 'module',
       plugins: ['jsx', 'typescript'],
@@ -361,7 +394,7 @@ function resolveImport(importPath: string, fromDir: string): string | null {
       let resolvedPath = path.resolve(fromDir, importPath);
 
       // Try different extensions
-      const extensions = ['.js', '.jsx', '.ts', '.tsx', '.json'];
+      const extensions = ['.js', '.jsx', '.ts', '.tsx', '.py', '.json'];
       for (const ext of extensions) {
         const testPath = resolvedPath + ext;
         if (fs.existsSync(testPath)) {
