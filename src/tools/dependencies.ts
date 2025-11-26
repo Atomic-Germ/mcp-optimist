@@ -141,7 +141,13 @@ export class DependenciesAnalyzer {
   }
 
   private async analyzeExternalDependencies(projectPath: string): Promise<any[]> {
-    const packageJsonPath = path.join(projectPath, 'package.json');
+    // Find package.json by walking up the directory tree
+    const packageJsonPath = this.findPackageJson(projectPath);
+
+    if (!packageJsonPath) {
+      console.warn('Could not find package.json in project directory tree');
+      return [];
+    }
 
     try {
       const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
@@ -156,6 +162,30 @@ export class DependenciesAnalyzer {
       console.warn('Could not read package.json:', error);
       return [];
     }
+  }
+
+  private findPackageJson(startPath: string): string | null {
+    let currentPath = path.resolve(startPath);
+
+    // Walk up the directory tree until we find package.json or reach the root
+    while (true) {
+      const packageJsonPath = path.join(currentPath, 'package.json');
+
+      if (fs.existsSync(packageJsonPath)) {
+        return packageJsonPath;
+      }
+
+      const parentPath = path.dirname(currentPath);
+
+      // If we've reached the root directory, stop
+      if (parentPath === currentPath) {
+        break;
+      }
+
+      currentPath = parentPath;
+    }
+
+    return null;
   }
 
   private detectCircularDependencies(graph: Map<string, string[]>): string[][] {
