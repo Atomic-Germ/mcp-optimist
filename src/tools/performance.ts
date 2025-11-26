@@ -249,7 +249,7 @@ export class PerformanceAnalyzer {
     stringConcatIssues: any[];
   }> {
     return new Promise((resolve) => {
-      const scriptPath = path.join(process.cwd(), 'src/python/performance_analyzer.py');
+      const scriptPath = path.join(__dirname, '../python/performance_analyzer.py');
       const absoluteFilePath = path.resolve(filePath);
 
       const pyshell = new PythonShell(scriptPath, {

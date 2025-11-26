@@ -252,7 +252,7 @@ export class RefactoringAnalyzer {
     focusArea: string;
   }> {
     return new Promise((resolve) => {
-      const scriptPath = path.join(process.cwd(), 'src/python/refactoring_analyzer.py');
+      const scriptPath = path.join(__dirname, '../../python/refactoring_analyzer.py');
       const absoluteFilePath = path.resolve(filePath);
 
       const pyshell = new PythonShell(scriptPath, {

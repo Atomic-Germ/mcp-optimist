@@ -7,7 +7,7 @@ const DEFAULT_CONFIG: Required<OptimistConfig> = {
   maxComplexity: 10,
   analysisDepth: 'medium',
   ignorePatterns: ['**/node_modules/**', '**/dist/**', '**/coverage/**'],
-  fileExtensions: ['.js', '.ts', '.jsx', '.tsx'],
+  fileExtensions: ['.js', '.ts', '.jsx', '.tsx', '.py'],
   enabledTools: 'all',
 };
 

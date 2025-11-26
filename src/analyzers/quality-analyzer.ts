@@ -72,8 +72,8 @@ export class QualityAnalyzer {
    */
   private analyzePythonQuality(filePath: string): Promise<QualityAnalysis> {
     return new Promise((resolve) => {
-      // Use process.cwd() to get the project root, then navigate to the python script
-      const scriptPath = path.join(process.cwd(), 'src/python/quality_analyzer.py');
+      // Use __dirname to find the script relative to the compiled analyzer
+      const scriptPath = path.join(__dirname, '../python/quality_analyzer.py');
       const absoluteFilePath = path.resolve(filePath);
 
       const pyshell = new PythonShell(scriptPath, {
