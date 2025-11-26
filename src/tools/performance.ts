@@ -1,6 +1,7 @@
 import { AnalysisResult, Finding, Suggestion } from '../types';
 import { ASTParser } from '../analyzers/ast-parser';
 import { PythonShell } from 'python-shell';
+import path from 'path';
 
 /**
  * Performance Analyzer - Identifies performance bottlenecks and inefficiencies
@@ -248,74 +249,9 @@ export class PerformanceAnalyzer {
     stringConcatIssues: any[];
   }> {
     return new Promise((resolve) => {
-      const pythonCode = `
-import ast
-import json
-import sys
+      const scriptPath = path.join(__dirname, '../../python/performance_analyzer.py');
 
-def analyze_file(file_path):
-    try:
-        with open(file_path, 'r') as f:
-            content = f.read()
-        
-        tree = ast.parse(content)
-        loops = []
-        functions = []
-        string_concat_issues = []
-        
-        # Track loop depth
-        loop_stack = []
-        
-        for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef):
-                functions.append({
-                    'name': node.name,
-                    'line': node.lineno,
-                    'params': len(node.args.args)
-                })
-            
-            elif isinstance(node, (ast.For, ast.While)):
-                depth = len(loop_stack) + 1
-                loop_stack.append(depth)
-                
-                loop_type = 'for' if isinstance(node, ast.For) else 'while'
-                loops.append({
-                    'type': loop_type,
-                    'depth': depth,
-                    'line': node.lineno,
-                    'column': 0
-                })
-                
-                # Check for string concat in loop
-                for child in ast.walk(node):
-                    if isinstance(child, ast.AugAssign) and isinstance(child.op, ast.Add):
-                        if isinstance(child.value, ast.Str):
-                            string_concat_issues.append({
-                                'line': child.lineno,
-                                'variable': 'string_var'  # simplified
-                            })
-                
-                loop_stack.pop()
-        
-        result = {
-            'loops': loops,
-            'functions': functions,
-            'stringConcatIssues': string_concat_issues
-        }
-        
-        print(json.dumps(result))
-    except Exception as e:
-        print(json.dumps({
-            'loops': [],
-            'functions': [],
-            'stringConcatIssues': []
-        }))
-
-if __name__ == '__main__':
-    analyze_file(sys.argv[1])
-`;
-
-      const pyshell = new PythonShell(pythonCode, {
+      const pyshell = new PythonShell(scriptPath, {
         args: [filePath],
         mode: 'text',
       });
