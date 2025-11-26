@@ -15,7 +15,7 @@ export class MemoryOptimizer {
    * Analyze a file for memory issues
    */
   async analyze(
-    filePath: string,
+    inputPath: string,
     options: { detectLeaks?: boolean; suggestFixes?: boolean } = {}
   ): Promise<AnalysisResult> {
     const startTime = Date.now();
@@ -31,124 +31,161 @@ export class MemoryOptimizer {
     const { suggestFixes = true } = options;
 
     try {
-      const analysis = this.analyzer.analyzeMemory(filePath);
+      // Import ASTParser here to avoid circular dependency
+      const { ASTParser } = await import('../analyzers/ast-parser');
+      const parser = new ASTParser();
 
-      // Process allocations
-      analysis.allocations.forEach((alloc) => {
-        if (alloc.inLoop) {
-          metrics.allocationsInLoops++;
+      // Expand the input path to get all files to analyze
+      const filesToAnalyze = parser.expandPath(inputPath);
 
-          const severity = this.getAllocationSeverity(alloc);
-          findings.push({
-            type: 'LARGE_ALLOCATION_IN_LOOP',
-            severity,
-            location: {
-              file: filePath,
-              line: alloc.line,
-            },
-            message: `${alloc.type.toUpperCase()} allocation in loop detected. ${this.getAllocationImpact(alloc)}`,
-            code: `new ${alloc.type}()`,
-          });
-
-          if (suggestFixes) {
-            suggestions.push({
-              type: 'USE_OBJECT_POOLING',
-              priority: severity === 'critical' ? 'high' : 'medium',
-              description: `Move ${alloc.type} allocation outside loop or use object pooling`,
-              example: this.getAllocationExample(alloc),
-              impact: 'Reduces GC pressure and improves performance significantly',
-            });
-          }
-        }
-      });
-
-      // Process potential leaks
-      analysis.leaks.forEach((leak) => {
-        metrics.potentialLeaks++;
-
-        const findingType = this.getLeakFindingType(leak.type);
-        const severity =
-          leak.type === 'event_listener' || leak.type === 'timer' ? 'high' : 'medium';
-
-        findings.push({
-          type: findingType,
-          severity,
-          location: {
-            file: filePath,
-            line: leak.line,
+      if (filesToAnalyze.length === 0) {
+        return {
+          status: 'error',
+          tool: 'optimize_memory',
+          data: {
+            summary: `No supported files found in: ${inputPath}`,
+            findings: [],
+            suggestions: [],
+            metrics: {},
           },
-          message: leak.description,
-          code: this.getLeakCodeSnippet(leak.type),
-        });
-
-        if (suggestFixes) {
-          suggestions.push({
-            type: this.getLeakSuggestionType(leak.type),
-            priority: severity === 'high' ? 'high' : 'medium',
-            description: this.getLeakSuggestion(leak.type),
-            example: this.getLeakExample(leak.type),
-            impact: 'Prevents memory leaks and ensures proper cleanup',
-          });
-        }
-      });
-
-      // Process closure issues
-      analysis.closures.forEach((closure) => {
-        metrics.closureIssues++;
-
-        if (closure.type === 'RETURNS_CLOSURE') {
-          findings.push({
-            type: 'CLOSURE_LEAK',
-            severity: 'medium',
-            location: {
-              file: filePath,
-              line: closure.line,
-            },
-            message: 'Function returns closure that may capture large data structures',
-          });
-
-          if (suggestFixes) {
-            suggestions.push({
-              type: 'OPTIMIZE_CLOSURE',
-              priority: 'medium',
-              description: 'Minimize closure scope to avoid capturing unnecessary data',
-              example: 'Pass only needed values as parameters instead of capturing entire scope',
-              impact: 'Reduces memory footprint of closures',
-            });
-          }
-        }
-      });
-
-      // Find unnecessary copies
-      const copies = this.analyzer.findUnnecessaryCopies(
-        this.analyzer['parser'].parseFile(filePath).ast
-      );
-
-      copies.forEach((copy) => {
-        findings.push({
-          type: 'UNNECESSARY_COPY',
-          severity: 'low',
-          location: {
-            file: filePath,
-            line: copy.line,
+          metadata: {
+            timestamp: new Date().toISOString(),
+            duration: Date.now() - startTime,
+            filesAnalyzed: 0,
           },
-          message: `Unnecessary array ${copy.pattern === 'array_spread' ? 'spread' : 'copy'} detected`,
-        });
+        };
+      }
 
-        if (suggestFixes) {
-          suggestions.push({
-            type: 'AVOID_UNNECESSARY_COPIES',
-            priority: 'low',
-            description: 'Remove unnecessary array copies to reduce allocations',
-            example: 'Work with original array when possible, or combine operations',
-            impact: 'Reduces memory allocations',
+      // Analyze each file
+      for (const filePath of filesToAnalyze) {
+        try {
+          const analysis = this.analyzer.analyzeMemory(filePath);
+
+          // Process allocations
+          analysis.allocations.forEach((alloc) => {
+            if (alloc.inLoop) {
+              metrics.allocationsInLoops++;
+
+              const severity = this.getAllocationSeverity(alloc);
+              findings.push({
+                type: 'LARGE_ALLOCATION_IN_LOOP',
+                severity,
+                location: {
+                  file: filePath,
+                  line: alloc.line,
+                },
+                message: `${alloc.type.toUpperCase()} allocation in loop detected. ${this.getAllocationImpact(alloc)}`,
+                code: `new ${alloc.type}()`,
+              });
+
+              if (suggestFixes) {
+                suggestions.push({
+                  type: 'USE_OBJECT_POOLING',
+                  priority: severity === 'critical' ? 'high' : 'medium',
+                  description: `Move ${alloc.type} allocation outside loop or use object pooling`,
+                  example: this.getAllocationExample(alloc),
+                  impact: 'Reduces GC pressure and improves performance significantly',
+                });
+              }
+            }
           });
+
+          // Process potential leaks
+          analysis.leaks.forEach((leak) => {
+            metrics.potentialLeaks++;
+
+            const findingType = this.getLeakFindingType(leak.type);
+            const severity =
+              leak.type === 'event_listener' || leak.type === 'timer' ? 'high' : 'medium';
+
+            findings.push({
+              type: findingType,
+              severity,
+              location: {
+                file: filePath,
+                line: leak.line,
+              },
+              message: leak.description,
+              code: this.getLeakCodeSnippet(leak.type),
+            });
+
+            if (suggestFixes) {
+              suggestions.push({
+                type: this.getLeakSuggestionType(leak.type),
+                priority: severity === 'high' ? 'high' : 'medium',
+                description: this.getLeakSuggestion(leak.type),
+                example: this.getLeakExample(leak.type),
+                impact: 'Prevents memory leaks and ensures proper cleanup',
+              });
+            }
+          });
+
+          // Process closure issues
+          analysis.closures.forEach((closure) => {
+            metrics.closureIssues++;
+
+            if (closure.type === 'RETURNS_CLOSURE') {
+              findings.push({
+                type: 'CLOSURE_LEAK',
+                severity: 'medium',
+                location: {
+                  file: filePath,
+                  line: closure.line,
+                },
+                message: 'Function returns closure that may capture large data structures',
+              });
+
+              if (suggestFixes) {
+                suggestions.push({
+                  type: 'OPTIMIZE_CLOSURE',
+                  priority: 'medium',
+                  description: 'Minimize closure scope to avoid capturing unnecessary data',
+                  example: 'Pass only needed values as parameters instead of capturing entire scope',
+                  impact: 'Reduces memory footprint of closures',
+                });
+              }
+            }
+          });
+
+          // Find unnecessary copies
+          const copies = this.analyzer.findUnnecessaryCopies(
+            this.analyzer['parser'].parseFile(filePath).ast
+          );
+
+          copies.forEach((copy) => {
+            findings.push({
+              type: 'UNNECESSARY_COPY',
+              severity: 'low',
+              location: {
+                file: filePath,
+                line: copy.line,
+              },
+              message: `Unnecessary array ${copy.pattern === 'array_spread' ? 'spread' : 'copy'} detected`,
+            });
+
+            if (suggestFixes) {
+              suggestions.push({
+                type: 'AVOID_UNNECESSARY_COPIES',
+                priority: 'low',
+                description: 'Remove unnecessary array copies to reduce allocations',
+                example: 'Work with original array when possible, or combine operations',
+                impact: 'Reduces memory allocations',
+              });
+            }
+          });
+
+        } catch (fileError) {
+          // Log error for this file but continue with others
+          console.warn(`Error analyzing ${filePath}:`, fileError);
         }
-      });
+      }
+
+      // Deduplicate suggestions by type
+      const uniqueSuggestions = this.deduplicateSuggestions(suggestions);
 
       // Add general suggestions if no major issues
       if (findings.length === 0 && suggestFixes) {
-        suggestions.push({
+        uniqueSuggestions.push({
           type: 'GENERAL',
           priority: 'low',
           description: 'No significant memory issues detected. Code appears memory-efficient.',
@@ -164,13 +201,13 @@ export class MemoryOptimizer {
         data: {
           summary: this.generateSummary(findings, metrics),
           findings,
-          suggestions,
+          suggestions: uniqueSuggestions,
           metrics,
         },
         metadata: {
           timestamp: new Date().toISOString(),
           duration,
-          filesAnalyzed: 1,
+          filesAnalyzed: filesToAnalyze.length,
         },
       };
     } catch (error) {
@@ -181,7 +218,7 @@ export class MemoryOptimizer {
         status: 'error',
         tool: 'optimize_memory',
         data: {
-          summary: `Error analyzing file: ${errorMessage}`,
+          summary: `Error analyzing path: ${errorMessage}`,
           findings: [],
           suggestions: [],
           metrics: {},
@@ -303,6 +340,18 @@ export class MemoryOptimizer {
       default:
         return 'Implement proper resource cleanup';
     }
+  }
+
+  private deduplicateSuggestions(suggestions: Suggestion[]): Suggestion[] {
+    const seen = new Set<string>();
+    return suggestions.filter((suggestion) => {
+      const key = `${suggestion.type}-${suggestion.description}`;
+      if (seen.has(key)) {
+        return false;
+      }
+      seen.add(key);
+      return true;
+    });
   }
 
   private generateSummary(findings: Finding[], metrics: Record<string, any>): string {

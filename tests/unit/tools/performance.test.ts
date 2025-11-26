@@ -30,6 +30,17 @@ describe('PerformanceAnalyzer', () => {
       expect(result.metadata).toBeDefined();
       expect(result.metadata.filesAnalyzed).toBeGreaterThan(0);
     });
+
+    it('should handle directory paths with proper success message', async () => {
+      const directoryPath = path.join(__dirname, '../../fixtures');
+      const result = await analyzer.analyze(directoryPath);
+
+      expect(result).toBeDefined();
+      expect(result.status).toBe('success');
+      expect(result.tool).toBe('analyze_performance');
+      expect(result.data.summary).toContain('performance');
+      expect(result.metadata.filesAnalyzed).toBeGreaterThan(0);
+    });
   });
 
   describe('nested loop detection', () => {

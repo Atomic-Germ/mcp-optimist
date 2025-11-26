@@ -136,11 +136,6 @@ export class OptimistServer {
           type: 'object',
           properties: {
             path: { type: 'string', description: 'Directory or file path to analyze' },
-            includeUnusedExports: {
-              type: 'boolean',
-              description: 'Include unused exports',
-              default: true,
-            },
           },
           required: ['path'],
         },

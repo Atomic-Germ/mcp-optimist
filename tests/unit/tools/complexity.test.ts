@@ -29,6 +29,17 @@ describe('ComplexityAnalyzer', () => {
       expect(result.data.metrics).toBeDefined();
       expect(result.metadata.filesAnalyzed).toBe(1);
     });
+
+    it('should handle directory paths with proper success message', async () => {
+      const directoryPath = path.join(__dirname, '../../fixtures');
+      const result = await analyzer.analyze(directoryPath);
+
+      expect(result).toBeDefined();
+      expect(result.status).toBe('success');
+      expect(result.tool).toBe('analyze_complexity');
+      expect(result.data.summary).toContain('complexity issue');
+      expect(result.metadata.filesAnalyzed).toBeGreaterThan(0);
+    });
   });
 
   describe('cyclomatic complexity calculation', () => {

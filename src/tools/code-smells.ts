@@ -1,74 +1,131 @@
 import { AnalysisResult, Finding, Suggestion } from '../types';
 import { SmellAnalyzer, CodeSmell } from '../analyzers/smell-analyzer';
+import { ASTParser } from '../analyzers/ast-parser';
 
 /**
  * Code Smell Detector - Identifies anti-patterns and code quality issues
  */
 export class CodeSmellDetector {
   private analyzer: SmellAnalyzer;
+  private parser: ASTParser;
 
   constructor() {
     this.analyzer = new SmellAnalyzer();
+    this.parser = new ASTParser();
   }
 
   /**
    * Analyze a file for code smells
    */
-  async analyze(filePath: string, options: { severity?: string } = {}): Promise<AnalysisResult> {
+  async analyze(inputPath: string, options: { severity?: string } = {}): Promise<AnalysisResult> {
     const startTime = Date.now();
     const findings: Finding[] = [];
     const suggestions: Suggestion[] = [];
 
     try {
-      const analysis = this.analyzer.analyzeSmells(filePath);
+      // Expand the input path to get all files to analyze
+      const filesToAnalyze = this.parser.expandPath(inputPath);
 
-      // Process all smell types
-      const allSmells = [
-        ...analysis.godObjects,
-        ...analysis.longParameterLists,
-        ...analysis.longMethods,
-        ...analysis.magicNumbers,
-        ...analysis.emptyCatches,
-      ];
-
-      // Filter by severity if specified
-      const filteredSmells = options.severity
-        ? allSmells.filter((smell) => this.matchesSeverity(smell.severity, options.severity!))
-        : allSmells;
-
-      // Convert smells to findings
-      filteredSmells.forEach((smell) => {
-        findings.push({
-          type: smell.type,
-          severity: smell.severity,
-          location: {
-            file: filePath,
-            line: smell.line,
+      if (filesToAnalyze.length === 0) {
+        return {
+          status: 'error',
+          tool: 'detect_code_smells',
+          data: {
+            summary: `No supported files found in: ${inputPath}`,
+            findings: [],
+            suggestions: [],
+            metrics: {},
           },
-          message: smell.description,
-        });
+          metadata: {
+            timestamp: new Date().toISOString(),
+            duration: Date.now() - startTime,
+            filesAnalyzed: 0,
+          },
+        };
+      }
 
-        // Add corresponding suggestion
-        const suggestion = this.getSuggestionForSmell(smell);
-        if (suggestion) {
-          suggestions.push(suggestion);
+      // Aggregate metrics across all files
+      let totalSmells = 0;
+      let classesAnalyzed = 0;
+      let largeClasses = 0;
+      let functionsAnalyzed = 0;
+      let longFunctions = 0;
+      let godObjects = 0;
+      let longParameterLists = 0;
+      let longMethods = 0;
+      let magicNumbers = 0;
+      let emptyCatches = 0;
+
+      // Analyze each file
+      for (const filePath of filesToAnalyze) {
+        try {
+          const analysis = this.analyzer.analyzeSmells(filePath);
+
+          // Process all smell types
+          const allSmells = [
+            ...analysis.godObjects,
+            ...analysis.longParameterLists,
+            ...analysis.longMethods,
+            ...analysis.magicNumbers,
+            ...analysis.emptyCatches,
+          ];
+
+          // Filter by severity if specified
+          const filteredSmells = options.severity
+            ? allSmells.filter((smell) => this.matchesSeverity(smell.severity, options.severity!))
+            : allSmells;
+
+          // Convert smells to findings
+          filteredSmells.forEach((smell) => {
+            findings.push({
+              type: smell.type,
+              severity: smell.severity,
+              location: {
+                file: filePath,
+                line: smell.line,
+              },
+              message: smell.description,
+            });
+
+            // Add corresponding suggestion
+            const suggestion = this.getSuggestionForSmell(smell);
+            if (suggestion) {
+              suggestions.push(suggestion);
+            }
+          });
+
+          // Aggregate metrics
+          totalSmells += allSmells.length;
+          classesAnalyzed += analysis.classMetrics.total;
+          largeClasses += analysis.classMetrics.large;
+          functionsAnalyzed += analysis.functionMetrics.total;
+          longFunctions += analysis.functionMetrics.long;
+          godObjects += analysis.godObjects.length;
+          longParameterLists += analysis.longParameterLists.length;
+          longMethods += analysis.longMethods.length;
+          magicNumbers += analysis.magicNumbers.length;
+          emptyCatches += analysis.emptyCatches.length;
+
+        } catch (fileError) {
+          // Log error for this file but continue with others
+          console.warn(`Error analyzing ${filePath}:`, fileError);
         }
-      });
+      }
 
       // Deduplicate suggestions by type
       const uniqueSuggestions = this.deduplicateSuggestions(suggestions);
 
       const metrics = {
-        totalSmells: allSmells.length,
-        classesAnalyzed: analysis.classMetrics.total,
-        largeClasses: analysis.classMetrics.large,
-        functionsAnalyzed: analysis.functionMetrics.total,
-        longFunctions: analysis.functionMetrics.long,
-        godObjects: analysis.godObjects.length,
-        longParameterLists: analysis.longParameterLists.length,
-        longMethods: analysis.longMethods.length,
-        magicNumbers: analysis.magicNumbers.length,
-        emptyCatches: analysis.emptyCatches.length,
+        totalSmells,
+        classesAnalyzed,
+        largeClasses,
+        functionsAnalyzed,
+        longFunctions,
+        godObjects,
+        longParameterLists,
+        longMethods,
+        magicNumbers,
+        emptyCatches,
       };
 
       const duration = Date.now() - startTime;
@@ -85,7 +142,7 @@ export class CodeSmellDetector {
         metadata: {
           timestamp: new Date().toISOString(),
           duration,
-          filesAnalyzed: 1,
+          filesAnalyzed: filesToAnalyze.length,
         },
       };
     } catch (error) {
@@ -96,7 +153,7 @@ export class CodeSmellDetector {
         status: 'error',
         tool: 'detect_code_smells',
         data: {
-          summary: `Error analyzing file: ${errorMessage}`,
+          summary: `Error analyzing path: ${errorMessage}`,
           findings: [],
           suggestions: [],
           metrics: {},

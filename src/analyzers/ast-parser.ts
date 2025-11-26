@@ -1,4 +1,6 @@
 import * as fs from 'fs';
+import * as path from 'path';
+import { glob } from 'glob';
 import * as parser from '@babel/parser';
 import traverse from '@babel/traverse';
 import { Node, File } from '@babel/types';
@@ -28,10 +30,105 @@ export interface FunctionInfo {
  * AST Parser for analyzing JavaScript/TypeScript code
  */
 export class ASTParser {
+  private supportedExtensions = ['.js', '.jsx', '.ts', '.tsx'];
+
+  /**
+   * Expand a path (file, directory, or glob) into a list of files to analyze
+   */
+  expandPath(inputPath: string): string[] {
+    // If path doesn't exist, treat as glob pattern
+    if (!fs.existsSync(inputPath)) {
+      return this.expandGlob(inputPath);
+    }
+
+    const stats = fs.statSync(inputPath);
+
+    if (stats.isFile()) {
+      // Single file
+      return this.isSupportedFile(inputPath) ? [inputPath] : [];
+    } else if (stats.isDirectory()) {
+      // Directory - recursively find all supported files
+      return this.findFilesInDirectory(inputPath);
+    } else {
+      // Not a file or directory, treat as glob
+      return this.expandGlob(inputPath);
+    }
+  }
+
+  /**
+   * Check if a file has a supported extension
+   */
+  private isSupportedFile(filePath: string): boolean {
+    const extension = path.extname(filePath).toLowerCase();
+    return this.supportedExtensions.includes(extension);
+  }
+
+  /**
+   * Recursively find all supported files in a directory
+   */
+  private findFilesInDirectory(dirPath: string): string[] {
+    const files: string[] = [];
+
+    const walkDirectory = (currentPath: string) => {
+      const items = fs.readdirSync(currentPath);
+
+      for (const item of items) {
+        const fullPath = path.join(currentPath, item);
+        const stats = fs.statSync(fullPath);
+
+        if (stats.isDirectory()) {
+          // Skip node_modules and other common directories
+          if (!['node_modules', '.git', 'dist', 'build', '.next'].includes(item)) {
+            walkDirectory(fullPath);
+          }
+        } else if (stats.isFile() && this.isSupportedFile(fullPath)) {
+          files.push(fullPath);
+        }
+      }
+    };
+
+    walkDirectory(dirPath);
+    return files;
+  }
+
+  /**
+   * Expand a glob pattern into matching files
+   */
+  private expandGlob(pattern: string): string[] {
+    try {
+      const matches = glob.sync(pattern, {
+        absolute: true,
+        nodir: true, // Only files, not directories
+      });
+
+      // Filter to only supported file types
+      return matches.filter(file => this.isSupportedFile(file));
+    } catch (error) {
+      // If glob fails, return empty array
+      return [];
+    }
+  }
+
   /**
    * Parse source code file to AST
    */
   parseFile(filePath: string): ParseResult {
+    // Validate that the path exists and is a file
+    if (!fs.existsSync(filePath)) {
+      throw new Error(`File does not exist: ${filePath}`);
+    }
+
+    const stats = fs.statSync(filePath);
+    if (!stats.isFile()) {
+      throw new Error(`Path is not a file: ${filePath}`);
+    }
+
+    // Check for supported file extensions
+    if (!this.isSupportedFile(filePath)) {
+      const extension = path.extname(filePath).toLowerCase();
+      throw new Error(`Unsupported file extension: ${extension}. Supported: ${this.supportedExtensions.join(', ')}`);
+    }
+
     const code = fs.readFileSync(filePath, 'utf-8');
     return this.parseCode(code, filePath);
   }

@@ -1,7 +1,5 @@
 import { AnalysisResult, Finding, Suggestion } from '../types';
 import { RefactoringAnalyzer } from '../analyzers/refactoring-analyzer';
-import * as fs from 'fs';
-import * as path from 'path';
 
 interface RefactoringOpportunity {
   type: string;
@@ -29,7 +27,7 @@ export class RefactoringSuggester {
   /**
    * Analyze a file or directory for refactoring opportunities
    */
-  async analyze(filePath: string, options: { focusArea?: string } = {}): Promise<AnalysisResult> {
+  async analyze(inputPath: string, options: { focusArea?: string } = {}): Promise<AnalysisResult> {
     const startTime = Date.now();
     const findings: Finding[] = [];
     const suggestions: Suggestion[] = [];
@@ -39,51 +37,66 @@ export class RefactoringSuggester {
         ? options.focusArea
         : 'all'
     ) as 'performance' | 'maintainability' | 'readability' | 'all';
-    let filesAnalyzed = 0;
 
     try {
-      const stats = fs.statSync(filePath);
-      const files: string[] = [];
+      // Import ASTParser here to avoid circular dependency
+      const { ASTParser } = await import('../analyzers/ast-parser');
+      const parser = new ASTParser();
 
-      // Collect files to analyze
-      if (stats.isDirectory()) {
-        this.collectFiles(filePath, files);
-      } else {
-        files.push(filePath);
+      // Expand the input path to get all files to analyze
+      const filesToAnalyze = parser.expandPath(inputPath);
+
+      if (filesToAnalyze.length === 0) {
+        return {
+          status: 'error',
+          tool: 'suggest_refactoring',
+          data: {
+            summary: `No supported files found in: ${inputPath}`,
+            findings: [],
+            suggestions: [],
+            metrics: {},
+          },
+          metadata: {
+            timestamp: new Date().toISOString(),
+            duration: Date.now() - startTime,
+            filesAnalyzed: 0,
+          },
+        };
       }
 
       // Analyze each file
       const allOpportunities: RefactoringOpportunity[] = [];
-      for (const file of files) {
-        if (!file.match(/\.(ts|js|tsx|jsx)$/)) {
-          continue;
+      for (const filePath of filesToAnalyze) {
+        try {
+          const result = this.analyzer.analyzeRefactoring(filePath, focusArea);
+
+          result.opportunities.forEach((opp) => {
+            allOpportunities.push(opp);
+
+            // Create finding
+            findings.push({
+              type: opp.type,
+              severity:
+                opp.priority === 'high' ? 'high' : opp.priority === 'medium' ? 'medium' : 'low',
+              location: opp.location,
+              message: opp.description,
+              code: opp.type,
+            });
+
+            // Create suggestion
+            suggestions.push({
+              type: opp.type,
+              priority: opp.priority,
+              description: opp.suggestion,
+              example: opp.example,
+              impact: opp.impact,
+            });
+          });
+
+        } catch (fileError) {
+          // Log error for this file but continue with others
+          console.warn(`Error analyzing ${filePath}:`, fileError);
         }
-
-        const result = this.analyzer.analyzeRefactoring(file, focusArea);
-        filesAnalyzed++;
-
-        result.opportunities.forEach((opp) => {
-          allOpportunities.push(opp);
-
-          // Create finding
-          findings.push({
-            type: opp.type,
-            severity:
-              opp.priority === 'high' ? 'high' : opp.priority === 'medium' ? 'medium' : 'low',
-            location: opp.location,
-            message: opp.description,
-            code: opp.type,
-          });
-
-          // Create suggestion
-          suggestions.push({
-            type: opp.type,
-            priority: opp.priority,
-            description: opp.suggestion,
-            example: opp.example,
-            impact: opp.impact,
-          });
-        });
       }
 
       // Calculate metrics
@@ -112,7 +125,7 @@ export class RefactoringSuggester {
         metadata: {
           timestamp: new Date().toISOString(),
           duration,
-          filesAnalyzed,
+          filesAnalyzed: filesToAnalyze.length,
         },
       };
     } catch (error) {
@@ -131,32 +144,9 @@ export class RefactoringSuggester {
         metadata: {
           timestamp: new Date().toISOString(),
           duration,
-          filesAnalyzed,
+          filesAnalyzed: 0,
         },
       };
-    }
-  }
-
-  private collectFiles(dir: string, files: string[]): void {
-    try {
-      const entries = fs.readdirSync(dir, { withFileTypes: true });
-
-      for (const entry of entries) {
-        const fullPath = path.join(dir, entry.name);
-
-        // Skip node_modules, dist, coverage
-        if (['node_modules', 'dist', 'coverage', '.git', 'build'].includes(entry.name)) {
-          continue;
-        }
-
-        if (entry.isDirectory()) {
-          this.collectFiles(fullPath, files);
-        } else if (entry.isFile()) {
-          files.push(fullPath);
-        }
-      }
-    } catch {
-      // Ignore errors reading directories
     }
   }
 

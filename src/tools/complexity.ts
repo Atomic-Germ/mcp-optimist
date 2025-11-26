@@ -16,7 +16,7 @@ export class ComplexityAnalyzer {
    * Analyze a file for complexity issues
    */
   async analyze(
-    filePath: string,
+    inputPath: string,
     options: { maxComplexity?: number; reportFormat?: string } = {}
   ): Promise<AnalysisResult> {
     const startTime = Date.now();
@@ -25,26 +25,93 @@ export class ComplexityAnalyzer {
     const maxComplexity = options.maxComplexity || 10;
 
     try {
-      const analysis = this.analyzer.analyzeComplexity(filePath);
+      // Import ASTParser here to avoid circular dependency
+      const { ASTParser } = await import('../analyzers/ast-parser');
+      const parser = new ASTParser();
+
+      // Expand the input path to get all files to analyze
+      const filesToAnalyze = parser.expandPath(inputPath);
+
+      if (filesToAnalyze.length === 0) {
+        return {
+          status: 'error',
+          tool: 'analyze_complexity',
+          data: {
+            summary: `No supported files found in: ${inputPath}`,
+            findings: [],
+            suggestions: [],
+            metrics: {},
+          },
+          metadata: {
+            timestamp: new Date().toISOString(),
+            duration: Date.now() - startTime,
+            filesAnalyzed: 0,
+          },
+        };
+      }
+
+      // Aggregate metrics across all files
+      let totalFunctions = 0;
+      let totalCyclomatic = 0;
+      let maxComplexityOverall = 0;
+      let totalCognitive = 0;
+      let totalDecisionPoints = 0;
+      let mostComplexFunction = '';
+      let mostComplexFile = '';
+      const allFunctions: any[] = [];
+
+      // Analyze each file
+      for (const filePath of filesToAnalyze) {
+        try {
+          const analysis = this.analyzer.analyzeComplexity(filePath);
+
+          // Aggregate metrics
+          totalFunctions += analysis.totalFunctions;
+          totalCyclomatic += analysis.averageComplexity * analysis.totalFunctions;
+          maxComplexityOverall = Math.max(maxComplexityOverall, analysis.maxComplexity);
+          totalCognitive += analysis.averageCognitive * analysis.totalFunctions;
+          totalDecisionPoints += analysis.totalDecisionPoints;
+
+          // Track most complex function
+          if (analysis.maxComplexity > maxComplexityOverall) {
+            mostComplexFunction = analysis.mostComplexFunction || '';
+            mostComplexFile = filePath;
+          }
+
+          // Collect all functions for detailed analysis
+          analysis.functions.forEach((func) => {
+            allFunctions.push({ ...func, file: filePath });
+          });
+
+        } catch (fileError) {
+          // Log error for this file but continue with others
+          console.warn(`Error analyzing ${filePath}:`, fileError);
+        }
+      }
+
+      // Calculate averages
+      const averageComplexity = totalFunctions > 0 ? totalCyclomatic / totalFunctions : 0;
+      const averageCognitive = totalFunctions > 0 ? totalCognitive / totalFunctions : 0;
 
       const metrics: Record<string, any> = {
-        totalFunctions: analysis.totalFunctions,
-        averageComplexity: analysis.averageComplexity,
-        maxComplexity: analysis.maxComplexity,
-        averageCognitive: analysis.averageCognitive,
-        totalDecisionPoints: analysis.totalDecisionPoints,
-        mostComplexFunction: analysis.mostComplexFunction,
+        totalFunctions,
+        averageComplexity: Math.round(averageComplexity * 100) / 100,
+        maxComplexity: maxComplexityOverall,
+        averageCognitive: Math.round(averageCognitive * 100) / 100,
+        totalDecisionPoints,
+        mostComplexFunction: mostComplexFunction || 'N/A',
+        mostComplexFile,
       };
 
-      // Analyze each function
-      analysis.functions.forEach((func) => {
+      // Analyze each function for findings
+      allFunctions.forEach((func) => {
         // Check cyclomatic complexity
         if (func.cyclomatic > maxComplexity * 2) {
           findings.push({
             type: 'HIGH_CYCLOMATIC_COMPLEXITY',
             severity: 'critical',
             location: {
-              file: filePath,
+              file: func.file,
               line: func.line,
             },
             message: `Function '${func.name}' has very high cyclomatic complexity (${func.cyclomatic}). Recommended max: ${maxComplexity}.`,
@@ -64,7 +131,7 @@ export class ComplexityAnalyzer {
             type: 'HIGH_CYCLOMATIC_COMPLEXITY',
             severity: 'high',
             location: {
-              file: filePath,
+              file: func.file,
               line: func.line,
             },
             message: `Function '${func.name}' has high cyclomatic complexity (${func.cyclomatic}). Recommended max: ${maxComplexity}.`,
@@ -87,7 +154,7 @@ export class ComplexityAnalyzer {
             type: 'HIGH_COGNITIVE_COMPLEXITY',
             severity: 'high',
             location: {
-              file: filePath,
+              file: func.file,
               line: func.line,
             },
             message: `Function '${func.name}' has high cognitive complexity (${func.cognitive}). This makes it hard to understand.`,
@@ -110,7 +177,7 @@ export class ComplexityAnalyzer {
             type: 'HIGH_NESTING_DEPTH',
             severity: 'medium',
             location: {
-              file: filePath,
+              file: func.file,
               line: func.line,
             },
             message: `Function '${func.name}' has deep nesting (depth ${func.nestingDepth}). Consider flattening.`,
@@ -153,7 +220,7 @@ export class ComplexityAnalyzer {
         metadata: {
           timestamp: new Date().toISOString(),
           duration,
-          filesAnalyzed: 1,
+          filesAnalyzed: filesToAnalyze.length,
         },
       };
     } catch (error) {
@@ -164,7 +231,7 @@ export class ComplexityAnalyzer {
         status: 'error',
         tool: 'analyze_complexity',
         data: {
-          summary: `Error analyzing file: ${errorMessage}`,
+          summary: `Error analyzing path: ${errorMessage}`,
           findings: [],
           suggestions: [],
           metrics: {},

@@ -29,6 +29,17 @@ describe('MemoryOptimizer', () => {
       expect(result.data.metrics).toBeDefined();
       expect(result.metadata.filesAnalyzed).toBe(1);
     });
+
+    it('should handle directory paths with proper success message', async () => {
+      const directoryPath = path.join(__dirname, '../../fixtures');
+      const result = await optimizer.analyze(directoryPath);
+
+      expect(result).toBeDefined();
+      expect(result.status).toBe('success');
+      expect(result.tool).toBe('optimize_memory');
+      expect(result.data.summary).toContain('memory');
+      expect(result.metadata.filesAnalyzed).toBeGreaterThan(0);
+    });
   });
 
   describe('memory leak detection', () => {
