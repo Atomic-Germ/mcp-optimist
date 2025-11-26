@@ -38,7 +38,7 @@ function removeNode(node) {
 function startPolling() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const intervalId = setInterval(() => {
-    // eslint-disable-next-line no-console
+     
     console.log('Polling...');
   }, 1000);
   // intervalId never cleared - memory leak!

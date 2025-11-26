@@ -102,7 +102,7 @@ export class ASTParser {
       });
 
       // Filter to only supported file types
-      return matches.filter(file => this.isSupportedFile(file));
+      return matches.filter((file) => this.isSupportedFile(file));
     } catch (error) {
       // If glob fails, return empty array
       return [];
@@ -126,7 +126,9 @@ export class ASTParser {
     // Check for supported file extensions
     if (!this.isSupportedFile(filePath)) {
       const extension = path.extname(filePath).toLowerCase();
-      throw new Error(`Unsupported file extension: ${extension}. Supported: ${this.supportedExtensions.join(', ')}`);
+      throw new Error(
+        `Unsupported file extension: ${extension}. Supported: ${this.supportedExtensions.join(', ')}`
+      );
     }
 
     const code = fs.readFileSync(filePath, 'utf-8');

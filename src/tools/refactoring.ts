@@ -92,7 +92,6 @@ export class RefactoringSuggester {
               impact: opp.impact,
             });
           });
-
         } catch (fileError) {
           // Log error for this file but continue with others
           console.warn(`Error analyzing ${filePath}:`, fileError);

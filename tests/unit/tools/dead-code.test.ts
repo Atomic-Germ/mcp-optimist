@@ -83,8 +83,8 @@ describe('DeadCodeDetector', () => {
 
       expect(result.data.metrics.totalDeadCode).toBe(
         result.data.metrics.unusedVariables +
-        result.data.metrics.unusedFunctions +
-        result.data.metrics.unusedImports
+          result.data.metrics.unusedFunctions +
+          result.data.metrics.unusedImports
       );
     });
 

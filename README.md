@@ -78,7 +78,6 @@ Add to your MCP client configuration (e.g., Claude Desktop):
 
 For guidance on using GitHub Copilot and the Continue runner with this toolkit, see [Copilot & Continue](COPILOT_AND_CONTINUE.md).
 
-
 ### Programmatic Usage
 
 ```typescript

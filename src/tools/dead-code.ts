@@ -59,9 +59,9 @@ export class DeadCodeDetector {
 
           // Set file path for each dead code item
           const fileDeadCode = [
-            ...analysis.unusedVariables.map(item => ({ ...item, file: filePath })),
-            ...analysis.unusedFunctions.map(item => ({ ...item, file: filePath })),
-            ...analysis.unusedImports.map(item => ({ ...item, file: filePath })),
+            ...analysis.unusedVariables.map((item) => ({ ...item, file: filePath })),
+            ...analysis.unusedFunctions.map((item) => ({ ...item, file: filePath })),
+            ...analysis.unusedImports.map((item) => ({ ...item, file: filePath })),
           ];
 
           allDeadCode.push(...fileDeadCode);
@@ -71,7 +71,6 @@ export class DeadCodeDetector {
           unusedVariables += analysis.unusedVariables.length;
           unusedFunctions += analysis.unusedFunctions.length;
           unusedImports += analysis.unusedImports.length;
-
         } catch (fileError) {
           // Log error for this file but continue with others
           console.warn(`Error analyzing ${filePath}:`, fileError);

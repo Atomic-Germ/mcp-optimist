@@ -133,7 +133,6 @@ export class PerformanceAnalyzer {
                 'Reduces memory allocations and improves performance significantly for large strings',
             });
           });
-
         } catch (fileError) {
           // Log error for this file but continue with others
           console.warn(`Error analyzing ${filePath}:`, fileError);

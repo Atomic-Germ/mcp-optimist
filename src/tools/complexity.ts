@@ -82,7 +82,6 @@ export class ComplexityAnalyzer {
           analysis.functions.forEach((func) => {
             allFunctions.push({ ...func, file: filePath });
           });
-
         } catch (fileError) {
           // Log error for this file but continue with others
           console.warn(`Error analyzing ${filePath}:`, fileError);

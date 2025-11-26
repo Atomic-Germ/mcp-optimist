@@ -119,10 +119,10 @@ export class DeadCodeAnalyzer {
 
         // Skip if it's a declaration
         if (
-          path.parent.type === 'VariableDeclarator' && path.parent.id === path.node ||
-          path.parent.type === 'FunctionDeclaration' && path.parent.id === path.node ||
-          path.parent.type === 'ClassDeclaration' && path.parent.id === path.node ||
-          path.parent.type === 'ImportSpecifier' && path.parent.imported === path.node ||
+          (path.parent.type === 'VariableDeclarator' && path.parent.id === path.node) ||
+          (path.parent.type === 'FunctionDeclaration' && path.parent.id === path.node) ||
+          (path.parent.type === 'ClassDeclaration' && path.parent.id === path.node) ||
+          (path.parent.type === 'ImportSpecifier' && path.parent.imported === path.node) ||
           path.parent.type === 'ImportDefaultSpecifier' ||
           path.parent.type === 'ImportNamespaceSpecifier'
         ) {
@@ -201,8 +201,8 @@ export class DeadCodeAnalyzer {
 
         // Skip if it's a declaration
         if (
-          path.parent.type === 'FunctionDeclaration' && path.parent.id === path.node ||
-          path.parent.type === 'VariableDeclarator' && path.parent.id === path.node
+          (path.parent.type === 'FunctionDeclaration' && path.parent.id === path.node) ||
+          (path.parent.type === 'VariableDeclarator' && path.parent.id === path.node)
         ) {
           return;
         }
@@ -239,7 +239,6 @@ export class DeadCodeAnalyzer {
     traverse(ast, {
       // Track imports
       ImportDeclaration(path) {
-
         path.node.specifiers.forEach((spec) => {
           let name: string;
           let isDefault = false;
@@ -269,7 +268,7 @@ export class DeadCodeAnalyzer {
 
         // Skip if it's an import declaration
         if (
-          path.parent.type === 'ImportSpecifier' && path.parent.local === path.node ||
+          (path.parent.type === 'ImportSpecifier' && path.parent.local === path.node) ||
           path.parent.type === 'ImportDefaultSpecifier' ||
           path.parent.type === 'ImportNamespaceSpecifier'
         ) {

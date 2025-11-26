@@ -105,7 +105,6 @@ export class CodeSmellDetector {
           longMethods += analysis.longMethods.length;
           magicNumbers += analysis.magicNumbers.length;
           emptyCatches += analysis.emptyCatches.length;
-
         } catch (fileError) {
           // Log error for this file but continue with others
           console.warn(`Error analyzing ${filePath}:`, fileError);

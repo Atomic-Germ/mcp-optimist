@@ -96,11 +96,11 @@ function processOrder(order) {
   updateAnalytics('order_processed', total);
 
   // Log everything
-  // eslint-disable-next-line no-console
+   
   console.log('Order processed:', order.id);
-  // eslint-disable-next-line no-console
+   
   console.log('Total:', total);
-  // eslint-disable-next-line no-console
+   
   console.log('Items:', order.items.length);
 
   return { subtotal, discount, tax, shipping, total };

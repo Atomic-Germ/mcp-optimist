@@ -140,7 +140,8 @@ export class MemoryOptimizer {
                   type: 'OPTIMIZE_CLOSURE',
                   priority: 'medium',
                   description: 'Minimize closure scope to avoid capturing unnecessary data',
-                  example: 'Pass only needed values as parameters instead of capturing entire scope',
+                  example:
+                    'Pass only needed values as parameters instead of capturing entire scope',
                   impact: 'Reduces memory footprint of closures',
                 });
               }
@@ -173,7 +174,6 @@ export class MemoryOptimizer {
               });
             }
           });
-
         } catch (fileError) {
           // Log error for this file but continue with others
           console.warn(`Error analyzing ${filePath}:`, fileError);
