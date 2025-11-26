@@ -24,7 +24,7 @@ describe('ASTParser', () => {
 
       expect(result.length).toBeGreaterThan(0);
       result.forEach((file: string) => {
-        expect(file).toMatch(/\.(js|ts|jsx|tsx)$/);
+        expect(file).toMatch(/\.(js|ts|jsx|tsx|py)$/);
         expect(fs.existsSync(file)).toBe(true);
       });
     });

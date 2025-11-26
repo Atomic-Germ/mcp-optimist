@@ -278,11 +278,44 @@ export class ASTParser {
    * Extract dependencies (imports) from a file
    */
   extractDependencies(filePath: string): string[] {
+    if (filePath.endsWith('.py')) {
+      return this.extractPythonDependencies(filePath);
+    }
+
     try {
       const result = this.parseFile(filePath);
       return this.extractDependenciesFromAST(result.ast, filePath);
     } catch (error) {
       console.warn(`Error extracting dependencies from ${filePath}:`, error);
+      return [];
+    }
+  }
+
+  private extractPythonDependencies(filePath: string): string[] {
+    // For Python, use a simple regex-based approach since we have mock AST
+    try {
+      const content = fs.readFileSync(filePath, 'utf-8');
+      const dependencies: string[] = [];
+      const lines = content.split('\n');
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.startsWith('import ')) {
+          const parts = trimmed.split(' ');
+          if (parts.length >= 2) {
+            dependencies.push(parts[1].split('.')[0]); // Get module name
+          }
+        } else if (trimmed.startsWith('from ')) {
+          const parts = trimmed.split(' ');
+          if (parts.length >= 2) {
+            dependencies.push(parts[1].split('.')[0]);
+          }
+        }
+      }
+
+      return dependencies;
+    } catch (error) {
+      console.warn(`Error extracting Python dependencies from ${filePath}:`, error);
       return [];
     }
   }

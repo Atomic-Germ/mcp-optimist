@@ -68,7 +68,7 @@ export class RefactoringSuggester {
       const allOpportunities: RefactoringOpportunity[] = [];
       for (const filePath of filesToAnalyze) {
         try {
-          const result = this.analyzer.analyzeRefactoring(filePath, focusArea);
+          const result = await this.analyzer.analyzeRefactoring(filePath, focusArea);
 
           result.opportunities.forEach((opp) => {
             allOpportunities.push(opp);
