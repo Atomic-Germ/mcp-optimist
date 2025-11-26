@@ -46,10 +46,6 @@ export class DeadCodeDetector {
       }
 
       // Aggregate metrics across all files
-      let totalDeadCode = 0;
-      let unusedVariables = 0;
-      let unusedFunctions = 0;
-      let unusedImports = 0;
       const allDeadCode: DeadCodeItem[] = [];
 
       // Analyze each file
@@ -65,12 +61,6 @@ export class DeadCodeDetector {
           ];
 
           allDeadCode.push(...fileDeadCode);
-
-          // Aggregate metrics
-          totalDeadCode += analysis.totalDeadCode;
-          unusedVariables += analysis.unusedVariables.length;
-          unusedFunctions += analysis.unusedFunctions.length;
-          unusedImports += analysis.unusedImports.length;
         } catch (fileError) {
           // Log error for this file but continue with others
           console.warn(`Error analyzing ${filePath}:`, fileError);
@@ -97,14 +87,18 @@ export class DeadCodeDetector {
         }
       });
 
+      // Deduplicate findings by file, line, and name
+      const uniqueFindings = this.deduplicateFindings(findings);
+
       // Deduplicate suggestions by type
       const uniqueSuggestions = this.deduplicateSuggestions(suggestions);
 
+      // Recalculate metrics based on unique findings
       const metrics = {
-        totalDeadCode,
-        unusedVariables,
-        unusedFunctions,
-        unusedImports,
+        totalDeadCode: uniqueFindings.length,
+        unusedVariables: uniqueFindings.filter((f) => f.type === 'UNUSED_VARIABLE').length,
+        unusedFunctions: uniqueFindings.filter((f) => f.type === 'UNUSED_FUNCTION').length,
+        unusedImports: uniqueFindings.filter((f) => f.type === 'UNUSED_IMPORT').length,
       };
 
       const duration = Date.now() - startTime;
@@ -113,8 +107,8 @@ export class DeadCodeDetector {
         status: 'success',
         tool: 'find_dead_code',
         data: {
-          summary: this.generateSummary(findings, metrics),
-          findings,
+          summary: this.generateSummary(uniqueFindings, metrics),
+          findings: uniqueFindings,
           suggestions: uniqueSuggestions,
           metrics,
         },
@@ -213,6 +207,18 @@ export class DeadCodeDetector {
       default:
         return null;
     }
+  }
+
+  private deduplicateFindings(findings: Finding[]): Finding[] {
+    const seen = new Set<string>();
+    return findings.filter((finding) => {
+      const key = `${finding.location.file}:${finding.location.line}:${finding.code}`;
+      if (seen.has(key)) {
+        return false;
+      }
+      seen.add(key);
+      return true;
+    });
   }
 
   private deduplicateSuggestions(suggestions: Suggestion[]): Suggestion[] {
