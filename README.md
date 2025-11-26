@@ -22,389 +22,353 @@ Optimist is a Model Context Protocol (MCP) server designed to work alongside oth
 - 🔗 **MCP Integration** - Seamless integration with other MCP tools
 - ✅ **Test-Driven** - Built using TDD methodology
 
-## Architecture
+## Quick Start
 
-Optimist exposes a set of tools via the Model Context Protocol that can be invoked by MCP clients (like Claude Desktop, IDEs, or CI/CD pipelines).
+### Prerequisites
 
-### Core Tools
+- Node.js 18+
+- npm or pnpm
+- An MCP-compatible client (e.g., Claude Desktop)
+- A codebase to analyze
 
-| Tool                   | Purpose                                                     |
-| ---------------------- | ----------------------------------------------------------- |
-| `analyze_performance`  | Profile code execution and identify performance bottlenecks |
-| `optimize_memory`      | Detect memory leaks and suggest memory-efficient patterns   |
-| `analyze_complexity`   | Evaluate cyclomatic and cognitive complexity                |
-| `analyze_dependencies` | Map dependency graphs and find optimization opportunities   |
-| `detect_code_smells`   | Identify anti-patterns and code quality issues              |
-| `find_dead_code`       | Locate unused code, variables, and dependencies             |
-| `optimize_hot_paths`   | Analyze and optimize frequently executed code paths         |
-| `suggest_refactoring`  | Provide AI-powered refactoring recommendations              |
-
-## Installation
+### Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/mcp-optimist.git
+git clone https://github.com/Atomic-Germ/mcp-optimist.git
 cd mcp-optimist
-
-# Install dependencies
 npm install
-
-# Build the project
 npm run build
-
-# Run tests
-npm test
 ```
 
-## Quick Start
+### Test the Server
 
-### As an MCP Server
+```bash
+# Run tests to verify everything works
+npm test
 
-Add to your MCP client configuration (e.g., Claude Desktop):
+# Run with coverage
+npm run test:coverage
+
+# Verify build output
+ls -la dist/
+```
+
+### Configure MCP Client
+
+#### Claude Desktop
+
+Edit your configuration file:
+
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+- **Linux**: `~/.config/claude/claude_desktop_config.json`
+
+Add the server:
 
 ```json
 {
   "mcpServers": {
     "optimist": {
       "command": "node",
-      "args": ["/path/to/mcp-optimist/dist/index.js"],
+      "args": ["/absolute/path/to/mcp-optimist/dist/index.js"],
       "env": {}
     }
   }
 }
 ```
 
-## Copilot & Continue
+### Verify Setup
 
-For guidance on using GitHub Copilot and the Continue runner with this toolkit, see [Copilot & Continue](COPILOT_AND_CONTINUE.md).
+1. Restart your MCP client
+2. Look for "optimist" in the available tools
+3. You should see 8 optimization tools available
 
-### Programmatic Usage
+### First Code Analysis
 
-```typescript
-import { OptimistServer } from 'mcp-optimist';
+Try these examples in your MCP client:
 
-const server = new OptimistServer({
-  port: 3000,
-  analysisDepth: 'deep',
-  enabledTools: ['all'],
-});
+#### Analyze Code Complexity
 
-await server.start();
+```
+Use analyze_complexity tool on your project:
+Path: "./src"
+Max Complexity: 10
+Report Format: "summary"
 ```
 
-## Usage Examples
+#### Detect Performance Issues
 
-### Analyze Performance
-
-```typescript
-// Request via MCP
-{
-  "tool": "analyze_performance",
-  "arguments": {
-    "path": "./src",
-    "includeTests": false,
-    "threshold": "medium"
-  }
-}
+```
+Use analyze_performance tool:
+Path: "./src"
+Include Tests: false
+Threshold: "medium"
 ```
 
-### Optimize Memory
+#### Find Code Smells
 
-```typescript
-{
-  "tool": "optimize_memory",
-  "arguments": {
-    "path": "./src/services",
-    "detectLeaks": true,
-    "suggestFixes": true
-  }
-}
+```
+Use detect_code_smells tool:
+Path: "./src"
+Severity: "medium"
 ```
 
-### Analyze Code Complexity
+#### Memory Analysis
 
-```typescript
-{
-  "tool": "analyze_complexity",
-  "arguments": {
-    "path": "./src",
-    "maxComplexity": 10,
-    "reportFormat": "summary"
-  }
-}
 ```
-
-## Configuration
-
-Create an `optimist.config.json` in your project root:
-
-```json
-{
-  "analysis": {
-    "depth": "deep",
-    "ignorePatterns": ["**/node_modules/**", "**/dist/**"],
-    "fileExtensions": [".js", ".ts", ".jsx", ".tsx"]
-  },
-  "performance": {
-    "threshold": "medium",
-    "profileHotPaths": true
-  },
-  "memory": {
-    "detectLeaks": true,
-    "trackAllocations": true
-  },
-  "complexity": {
-    "maxCyclomatic": 10,
-    "maxCognitive": 15
-  },
-  "dependencies": {
-    "checkCircular": true,
-    "suggestUpdates": false
-  }
-}
+Use optimize_memory tool:
+Path: "./src"
+Detect Leaks: true
+Suggest Fixes: true
 ```
 
 ## Development
+
+### Development Commands
+
+```bash
+# Development
+npm run dev              # Run with ts-node (development mode)
+npm run build:watch      # Auto-rebuild on changes
+
+# Testing
+npm test                 # Run all tests
+npm run test:watch       # Watch mode for tests
+npm run test:coverage    # Generate coverage report
+
+# Code Quality
+npm run lint             # Check code with ESLint
+npm run lint:fix         # Auto-fix linting issues
+npm run format           # Format code with Prettier
+npm run format:check     # Check formatting
+
+# Build
+npm run build            # Compile to dist/
+npm run clean            # Remove dist/
+```
 
 ### Project Structure
 
 ```
 mcp-optimist/
 ├── src/
-│   ├── index.ts              # Main entry point
-│   ├── server.ts             # MCP server implementation
-│   ├── tools/                # Tool implementations
-│   │   ├── performance.ts    # Performance analysis
-│   │   ├── memory.ts         # Memory optimization
-│   │   ├── complexity.ts     # Complexity analysis
-│   │   ├── dependencies.ts   # Dependency management
-│   │   ├── code-smells.ts    # Code smell detection
-│   │   ├── dead-code.ts      # Dead code finder
-│   │   ├── hot-paths.ts      # Hot path optimization
-│   │   └── refactoring.ts    # Refactoring suggestions
-│   ├── analyzers/            # Core analysis engines
-│   ├── utils/                # Utility functions
-│   └── types/                # TypeScript definitions
-├── tests/                    # Test suites
-│   ├── unit/                 # Unit tests
-│   ├── integration/          # Integration tests
-│   └── fixtures/             # Test fixtures
-├── docs/                     # Documentation
-├── package.json
-├── tsconfig.json
-└── optimist.config.json      # Default configuration
+│   ├── index.ts         # MCP server entry point
+│   ├── server.ts        # OptimistServer class
+│   ├── types/           # TypeScript definitions
+│   ├── tools/           # Tool implementations
+│   ├── analyzers/       # Analysis engines
+│   └── utils/           # Utility functions
+│
+├── tests/
+│   ├── unit/            # Unit tests
+│   ├── integration/     # Integration tests
+│   └── fixtures/        # Test fixtures
+│
+├── docs/                # Documentation
+├── archive/             # Archived documentation
+├── README.md            # This file
+├── package.json         # Dependencies and scripts
+├── tsconfig.json        # TypeScript configuration
+├── jest.config.js       # Test configuration
+├── eslint.config.js     # Linting rules
+├── .prettierrc          # Code formatting
+└── dist/                # Compiled JavaScript
 ```
 
-### Running Tests
+## Examples
 
-```bash
-# Run all tests
-npm test
+### Basic Project Analysis
 
-# Run with coverage
-npm run test:coverage
-
-# Run specific test suite
-npm test -- --grep "performance"
-
-# Watch mode
-npm run test:watch
-```
-
-### Building
-
-```bash
-# Development build
-npm run build
-
-# Production build
-npm run build:prod
-
-# Watch mode
-npm run build:watch
-```
-
-## TDD Methodology
-
-This project is built using Test-Driven Development:
-
-1. **RED** - Write failing tests first
-2. **GREEN** - Implement minimal code to pass tests
-3. **REFACTOR** - Improve code quality while maintaining tests
-
-All features are developed following this cycle, ensuring high code quality and test coverage.
-
-## Integration with Other MCP Tools
-
-Optimist is designed to work alongside:
-
-- **Code Analysis Tools** - Linters, formatters, type checkers
-- **Testing Frameworks** - Jest, Vitest, Mocha
-- **Build Tools** - Webpack, Vite, Rollup
-- **Documentation Generators** - TypeDoc, JSDoc
-- **CI/CD Systems** - GitHub Actions, GitLab CI, Jenkins
-
-## API Reference
-
-### Tool Schemas
-
-#### analyze_performance
+Perform comprehensive analysis of your entire project:
 
 ```typescript
+// Analyze overall code quality
 {
-  path: string;              // Directory or file path
-  includeTests?: boolean;    // Include test files (default: false)
-  threshold?: 'low' | 'medium' | 'high'; // Alert threshold
-  profileHotPaths?: boolean; // Analyze hot execution paths
+  tool: "detect_code_smells",
+  arguments: {
+    path: "./src",
+    severity: "medium"
+  }
+}
+
+// Check performance issues
+{
+  tool: "analyze_performance",
+  arguments: {
+    path: "./src",
+    threshold: "medium",
+    includeTests: false
+  }
+}
+
+// Find complexity issues
+{
+  tool: "analyze_complexity",
+  arguments: {
+    path: "./src",
+    maxComplexity: 8,
+    reportFormat: "detailed"
+  }
 }
 ```
 
-#### optimize_memory
+### Single File Analysis
+
+Analyze a specific problematic file:
 
 ```typescript
 {
-  path: string;              // Directory or file path
-  detectLeaks?: boolean;     // Check for memory leaks
-  suggestFixes?: boolean;    // Provide fix suggestions
-  trackAllocations?: boolean; // Track allocation patterns
+  tool: "analyze_performance",
+  arguments: {
+    path: "./src/services/dataProcessor.ts",
+    threshold: "low",
+    profileHotPaths: true,
+    trackAsyncOperations: true
+  }
 }
 ```
 
-#### analyze_complexity
+### Memory Optimization
+
+Find and fix memory leaks in a React component:
 
 ```typescript
 {
-  path: string;              // Directory or file path
-  maxComplexity?: number;    // Maximum allowed complexity
-  reportFormat?: 'summary' | 'detailed' | 'json';
+  tool: "optimize_memory",
+  arguments: {
+    path: "./src/components",
+    detectLeaks: true,
+    analyzeClosures: true
+  }
 }
 ```
 
-### Response Format
-
-All tools return responses in this structure:
+**Leak Analysis Result:**
 
 ```typescript
 {
-  status: 'success' | 'error';
-  tool: string;
   data: {
-    summary: string;
-    findings: Array<Finding>;
-    suggestions: Array<Suggestion>;
-    metrics: Record<string, any>;
-  }
-  metadata: {
-    timestamp: string;
-    duration: number;
-    filesAnalyzed: number;
+    findings: [
+      {
+        type: 'event-listener-leak',
+        file: 'src/components/DataChart.tsx',
+        line: 23,
+        description: 'Event listeners not cleaned up in useEffect',
+        leakPotential: 'high',
+      },
+      {
+        type: 'closure-retention',
+        file: 'src/hooks/useDataFetch.ts',
+        line: 15,
+        description: 'Closure retaining large objects unnecessarily',
+      },
+    ];
   }
 }
 ```
 
-## Contributing
+**Memory Leak Fixes:**
 
-We welcome contributions! Please follow these guidelines:
+Problem - Event Listener Leak:
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Write tests first (TDD approach)
-4. Implement your feature
-5. Ensure all tests pass (`npm test`)
-6. Commit your changes (`git commit -m 'Add amazing feature'`)
-7. Push to the branch (`git push origin feature/amazing-feature`)
-8. Open a Pull Request
+```typescript
+// Problematic - no cleanup
+function DataChart() {
+  useEffect(() => {
+    window.addEventListener('resize', handleResize);
+    // Missing cleanup function
+  }, []);
+}
+```
 
-### Development Guidelines
+Fixed:
 
-- Follow TDD methodology
-- Maintain >90% test coverage
-- Use TypeScript strict mode
-- Follow existing code style
-- Update documentation
+```typescript
+// Fixed with proper cleanup
+function DataChart() {
+  useEffect(() => {
+    const handleResize = () => {
+      // Handle resize
+    };
 
-## Integration with Other MCP Tools
+    window.addEventListener('resize', handleResize);
 
-Optimist works seamlessly alongside other MCP servers:
+    // Cleanup function prevents leak
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+}
+```
 
-- **mcp-consult** - AI consultation and reasoning for complex optimization decisions
-- **mcp-tdd** - Test-driven development workflows during refactoring
-- **Code Analysis Tools** - Linters, formatters, type checkers
-- **Testing Frameworks** - Jest, Vitest, Mocha
-- **Build Tools** - Webpack, Vite, Rollup
-- **CI/CD Systems** - GitHub Actions, GitLab CI, Jenkins
+### Performance Optimization
 
-## Roadmap
+Identify and fix performance bottlenecks:
 
-### Phase 1 - Foundation (Current)
+```typescript
+{
+  tool: "analyze_performance",
+  arguments: {
+    path: "./src/services/dataProcessor.ts",
+    threshold: "low",
+    profileHotPaths: true
+  }
+}
+```
 
-- [x] Project setup
-- [x] Core MCP server implementation
-- [x] Basic tool scaffolding
-- [x] Test infrastructure
+**Before (Problematic):**
 
-### Phase 2 - Core Features ✅ **COMPLETE!**
+```typescript
+// O(n²) complexity - problematic
+function processLargeDataset(items: Item[], lookup: LookupItem[]): ProcessedItem[] {
+  return items.map((item) => {
+    // Inner loop for each item - O(n²)
+    const match = lookup.find((l) => l.id === item.lookupId);
+    return { ...item, enrichedData: match?.data };
+  });
+}
+```
 
-- [x] Performance analyzer ✅ **COMPLETE**
-- [x] Memory optimizer ✅ **COMPLETE**
-- [x] Complexity analyzer ✅ **COMPLETE**
-- [x] Code smell detector ✅ **COMPLETE**
+**After (Optimized):**
 
-**Phase 2: 100% COMPLETE - All core optimization tools delivered!**
+```typescript
+// O(n) complexity - optimized
+function processLargeDataset(items: Item[], lookup: LookupItem[]): ProcessedItem[] {
+  // Create lookup map once - O(n)
+  const lookupMap = new Map(lookup.map((l) => [l.id, l.data]));
 
-### Phase 3 - Advanced Features
+  // Single pass through items - O(n)
+  return items.map((item) => ({
+    ...item,
+    enrichedData: lookupMap.get(item.lookupId),
+  }));
+}
+```
 
-- [ ] Dependency graph analysis
-- [ ] Dead code elimination
-- [ ] Hot path optimization
-- [ ] AI-powered refactoring
+### Code Quality Analysis
 
-### Phase 4 - Integration & Polish
+Analyze function complexity and code smells:
 
-- [ ] CI/CD integration
-- [ ] IDE plugins
-- [ ] Performance optimizations
-- [ ] Documentation completion
+```typescript
+{
+  tool: "analyze_complexity",
+  arguments: {
+    path: "./src/utils/validation.ts",
+    maxComplexity: 6,
+    includeCognitive: true
+  }
+}
 
-## Performance
-
-Optimist is designed to be lightweight and fast:
-
-- Async analysis for non-blocking operations
-- Incremental analysis support
-- Caching for repeated operations
-- Parallel processing where applicable
-
-## Security
-
-- No code execution during analysis
-- Read-only file access by default
-- Sandboxed analysis environment
-- Secure MCP protocol implementation
-
-## License
-
-MIT License - see [LICENSE](LICENSE) file for details
-
-## Acknowledgments
-
-- Built on the [Model Context Protocol](https://modelcontextprotocol.io)
-- Inspired by tools like ESLint, SonarQube, and CodeClimate
-- Developed with TDD using the mcp-tdd framework
-
-## Support
-
-- 📚 [Documentation](docs/)
-- 🐛 [Issue Tracker](https://github.com/yourusername/mcp-optimist/issues)
-- 💬 [Discussions](https://github.com/yourusername/mcp-optimist/discussions)
-- 📧 Email: support@optimist-mcp.dev
-
-## Links
-
-- [Model Context Protocol Specification](https://modelcontextprotocol.io/docs)
-- [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk)
-- [Example MCP Servers](https://github.com/modelcontextprotocol/servers)
+{
+  tool: "detect_code_smells",
+  arguments: {
+    path: "./src/services/UserService.ts",
+    severity: "high"
+  }
+}
+```
 
 ---
 
-**Built with ❤️ using Test-Driven Development and the Model Context Protocol**
+For more examples, see the [API Reference](docs/API_REFERENCE.md).

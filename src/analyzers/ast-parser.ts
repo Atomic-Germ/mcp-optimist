@@ -103,6 +103,7 @@ export class ASTParser {
 
       // Filter to only supported file types
       return matches.filter((file) => this.isSupportedFile(file));
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       // If glob fails, return empty array
       return [];

@@ -55,6 +55,7 @@ export class RefactoringAnalyzer {
       if (validFocusArea === 'all' || validFocusArea === 'readability') {
         this.findReadabilityOpportunities(lines, filePath, opportunities);
       }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       // Return empty opportunities on error
     }

@@ -1,15 +1,15 @@
 import { AnalysisResult, Finding, Suggestion } from '../types';
-import { ComplexityAnalyzer as CyclomaticCognitiveComplexityAnalyzer } from '../analyzers/complexity-analyzer';
+import { QualityAnalyzer } from '../analyzers/quality-analyzer';
 
 /**
  * Complexity Analyzer - Measures cyclomatic and cognitive complexity
  * (Ironically named to emphasize the complexity of complexity analysis!)
  */
 export class ComplexityAnalyzer {
-  private analyzer: CyclomaticCognitiveComplexityAnalyzer;
+  private analyzer: QualityAnalyzer;
 
   constructor() {
-    this.analyzer = new CyclomaticCognitiveComplexityAnalyzer();
+    this.analyzer = new QualityAnalyzer();
   }
 
   /**
@@ -63,7 +63,7 @@ export class ComplexityAnalyzer {
       // Analyze each file
       for (const filePath of filesToAnalyze) {
         try {
-          const analysis = this.analyzer.analyzeComplexity(filePath);
+          const analysis = this.analyzer.analyzeQuality(filePath).complexity;
 
           // Aggregate metrics
           totalFunctions += analysis.totalFunctions;

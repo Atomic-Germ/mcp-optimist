@@ -1,16 +1,16 @@
 import { AnalysisResult, Finding, Suggestion } from '../types';
-import { SmellAnalyzer, CodeSmell } from '../analyzers/smell-analyzer';
+import { QualityAnalyzer, CodeSmell } from '../analyzers/quality-analyzer';
 import { ASTParser } from '../analyzers/ast-parser';
 
 /**
  * Code Smell Detector - Identifies anti-patterns and code quality issues
  */
 export class CodeSmellDetector {
-  private analyzer: SmellAnalyzer;
+  private analyzer: QualityAnalyzer;
   private parser: ASTParser;
 
   constructor() {
-    this.analyzer = new SmellAnalyzer();
+    this.analyzer = new QualityAnalyzer();
     this.parser = new ASTParser();
   }
 
@@ -59,7 +59,7 @@ export class CodeSmellDetector {
       // Analyze each file
       for (const filePath of filesToAnalyze) {
         try {
-          const analysis = this.analyzer.analyzeSmells(filePath);
+          const analysis = this.analyzer.analyzeQuality(filePath).smells;
 
           // Process all smell types
           const allSmells = [

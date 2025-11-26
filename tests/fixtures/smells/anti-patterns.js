@@ -96,11 +96,11 @@ function processOrder(order) {
   updateAnalytics('order_processed', total);
 
   // Log everything
-   
+
   console.log('Order processed:', order.id);
-   
+
   console.log('Total:', total);
-   
+
   console.log('Items:', order.items.length);
 
   return { subtotal, discount, tax, shipping, total };
