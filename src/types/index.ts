@@ -101,4 +101,7 @@ export interface DetectCodeSmellsArgs {
 export interface SuggestRefactoringArgs {
   path: string;
   focusArea?: string;
+  minPriority?: 'low' | 'medium' | 'high';
+  maxResults?: number;
+  excludeTypes?: string[];
 }

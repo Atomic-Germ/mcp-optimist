@@ -133,6 +133,9 @@ async function main() {
           }
           const options = {
             focusArea: toolArgs.focusArea,
+            minPriority: toolArgs.minPriority,
+            maxResults: toolArgs.maxResults,
+            excludeTypes: toolArgs.excludeTypes,
           };
           const result = await refactoringSuggester.analyze(toolArgs.path, options);
           return {

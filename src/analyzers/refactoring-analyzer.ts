@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 
-interface RefactoringOpportunity {
+export interface RefactoringOpportunity {
   type: string;
   description: string;
   priority: 'low' | 'medium' | 'high';

@@ -163,6 +163,27 @@ export class OptimistServer {
               type: 'string',
               enum: ['performance', 'maintainability', 'readability', 'all'],
               default: 'all',
+              description: 'Focus area for refactoring suggestions',
+            },
+            minPriority: {
+              type: 'string',
+              enum: ['low', 'medium', 'high'],
+              default: 'low',
+              description:
+                'Minimum priority level for suggestions (filters out lower priority items)',
+            },
+            maxResults: {
+              type: 'number',
+              minimum: 1,
+              maximum: 100,
+              default: 50,
+              description: 'Maximum number of suggestions to return',
+            },
+            excludeTypes: {
+              type: 'array',
+              items: { type: 'string' },
+              description:
+                'Types of refactoring suggestions to exclude (e.g., ["LONG_FUNCTION", "COMPLEX_CONDITION"])',
             },
           },
           required: ['path'],
